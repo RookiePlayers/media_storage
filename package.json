@@ -1,6 +1,6 @@
 {
   "name": "universal_media_storage",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A media storage helper, allowing storage to firebase storage, cloudflare r2, aws s2 and more buckets. ",
   "main": "src/index.ts",
   "scripts": {
