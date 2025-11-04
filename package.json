@@ -1,0 +1,50 @@
+{
+  "name": "media_storage",
+  "version": "1.0.0",
+  "description": "A media storage helper, allowing storage to firebase storage, cloudflare r2, aws s2 and more buckets. ",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "jest --passWithNoTests --runInBand --detectOpenHandles --logHeapUsage --coverage",
+    "test:watch": "jest --watch",
+    "postinstall": "npx husky install",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RookiePlayers/media_storage.git"
+  },
+  "keywords": [
+    "storage",
+    "blob",
+    "buckets",
+    "media"
+  ],
+  "author": "Olamide Ogunlade",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RookiePlayers/media_storage/issues"
+  },
+  "homepage": "https://github.com/RookiePlayers/media_storage#readme",
+  "devDependencies": {
+    "@commitlint/config-conventional": "^20.0.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/npm": "^12.0.2",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.10.0",
+    "eslint": "^9.39.1",
+    "husky": "^9.1.7",
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.10",
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.922.0",
+    "firebase-admin": "^13.5.0",
+    "google-auth-library": "^10.5.0",
+    "googleapis": "^164.1.0",
+    "stream": "^0.0.3"
+  }
+}

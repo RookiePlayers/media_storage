@@ -1,0 +1,40 @@
+name: Workflow for production
+
+on:
+  # Carry out builds on push to main
+  push: 
+    branches:
+        - 'main'
+  workflow_dispatch:
+
+jobs:
+  production-ci:
+    name: Perform CI flow for production
+    uses: ./.github/workflows/ci.yml
+    with:
+      target-env: production
+    secrets: inherit
+    
+  build:
+    needs: production-ci
+    name:  Build Release
+    uses: ./.github/workflows/build.yml
+    with:
+      target-env: production
+    secrets: inherit
+
+  create-release:
+    needs: build
+    name: Tag Release
+    uses: ./.github/workflows/release.yml
+    with:
+      target-env: production
+    secrets: inherit
+
+  deploy:
+    needs: create-release
+    name: Deploy to Production Environment
+    uses: ./.github/workflows/deploy.yml
+    with:
+      target-env: production
+    secrets: inherit

@@ -1,0 +1,40 @@
+name: Workflow for Staging
+
+on:
+  # Carry out builds on push to main
+  push: 
+    branches:
+        - 'main'
+  workflow_dispatch:
+
+jobs:
+  staging-ci:
+    name: Perform CI flow for staging
+    uses: ./.github/workflows/ci.yml
+    with:
+      target-env: staging
+    secrets: inherit
+    
+  build:
+    needs: staging-ci
+    name:  Build Release
+    uses: ./.github/workflows/build.yml
+    with:
+      target-env: staging
+    secrets: inherit
+
+  create-release:
+    needs: build
+    name: Tag Release
+    uses: ./.github/workflows/release.yml
+    with:
+      target-env: staging
+    secrets: inherit
+
+  deploy:
+    needs: create-release
+    name: Deploy to Staging Environment
+    uses: ./.github/workflows/cd/deploy.yml
+    with:
+      target-env: staging
+    secrets: inherit
