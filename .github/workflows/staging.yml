@@ -4,7 +4,7 @@ on:
   # Carry out builds on push to main
   push: 
     branches:
-        - 'main'
+        - 'staging'
   workflow_dispatch:
 
 jobs:
