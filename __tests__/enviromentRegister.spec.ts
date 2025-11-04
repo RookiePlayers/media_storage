@@ -1,6 +1,5 @@
 // __tests__/environmentRegister.spec.ts
 import EnvironmentRegister from '../src/register';
-import type { EnvironmentConfig } from '../src/types';
 
 describe('EnvironmentRegister', () => {
   const ORIG_ENV = process.env;

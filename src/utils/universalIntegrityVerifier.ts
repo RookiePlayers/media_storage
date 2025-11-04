@@ -1,6 +1,6 @@
 // verify/universalVerify.ts
 import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { google, drive_v3 } from 'googleapis';
+import { drive_v3 } from 'googleapis';
 import type { Storage } from '@google-cloud/storage';
 import { base64ToHex, parseSRI } from './integrity';
 import {

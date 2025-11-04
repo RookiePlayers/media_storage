@@ -29,8 +29,8 @@ jest.mock('../src/config/firebase_config', () => {
     }),
     // shim for @google-cloud/storage-like API used by verifyStorage
     storage: {
-      bucket: (name: string) => ({
-        file: (p: string) => ({
+      bucket: (_name: string) => ({
+        file: (_p: string) => ({
           exists: existsMock,
           getMetadata: getMetadataMock,
         }),

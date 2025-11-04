@@ -32,7 +32,6 @@
  */
 
 import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { FirebaseStorageService } from './firebaseStorage';
 import { StorageProvider, StorageResult, UploadParams } from '../types';
 import { buildImmutableKey, computeSRI } from '../utils/encryptions';
 import { IStorageService } from '../iStorage';

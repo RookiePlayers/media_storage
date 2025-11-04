@@ -28,8 +28,7 @@ export default class EnvironmentRegister {
     name: K,
     value: EnvironmentConfig[K]
   ): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (this.environments as any)[name] = value;
+    (this.environments as Record<string, unknown>)[name] = value;
   }
 
   /**

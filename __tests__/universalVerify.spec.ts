@@ -31,8 +31,8 @@ function makeGCS({
   metadataSha256, // hex
 }: { exists?: boolean; size?: number; metadataSha256?: string } = {}) {
   return {
-    bucket: (bucketName: string) => ({
-      file: (objectPath: string) => ({
+    bucket: (_bucketName: string) => ({
+      file: (_objectPath: string) => ({
         exists: jest.fn().mockResolvedValue([exists]),
         getMetadata: jest.fn().mockResolvedValue([
           {

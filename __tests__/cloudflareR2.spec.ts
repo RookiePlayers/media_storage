@@ -178,7 +178,6 @@ it('handles PUT race (412) gracefully: HEAD 404 -> PUT 412 -> verify HEAD ok', a
 it('throws when verifyStorage says object does not exist after upload', async () => {
   const svc = new CloudFlareR2StorageService();
   const data = makeBuffer(6, 'no-exist');
-  const contentSha = sha256Hex(data);
 
   let call = 0;
   sendMock.mockImplementation((cmd: any) => {
