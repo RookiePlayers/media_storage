@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.922.0",
+    "commitlint": "^20.1.0",
     "firebase-admin": "^13.5.0",
     "google-auth-library": "^10.5.0",
     "googleapis": "^164.1.0",
