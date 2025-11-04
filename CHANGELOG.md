@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/RookiePlayers/media_storage/compare/v1.0.0...v1.0.1) (2025-11-04)
+
+
+### Bug Fixes
+
+* Update workflow trigger to include specific branches and rename package ([8cbf25d](https://github.com/RookiePlayers/media_storage/commit/8cbf25d4ca1bb4dbb1122eeb3fa281f2c9013211))
+
 # 1.0.0 (2025-11-04)
 
 
