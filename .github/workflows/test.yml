@@ -12,7 +12,7 @@ on:
 jobs:
   development-ci:
     name: Perform CI flow for Development
-    uses: ./.github/workflows/ci/ci.yml
+    uses: ./.github/workflows/ci.yml
     with:
       target-env: development
     secrets: inherit

@@ -10,7 +10,7 @@ on:
 jobs:
   development-ci:
     name: Perform CI flow for development
-    uses: ./.github/workflows/ci/ci.yml
+    uses: ./.github/workflows/ci.yml
     with:
       target-env: development
     secrets: inherit
@@ -18,7 +18,7 @@ jobs:
   build:
     needs: development-ci
     name:  Build Release
-    uses: ./.github/workflows/ci/build.yml
+    uses: ./.github/workflows/build.yml
     with:
       target-env: development
     secrets: inherit
@@ -26,7 +26,7 @@ jobs:
   create-release:
     needs: build
     name: Tag Release
-    uses: ./.github/workflows/ci/release.yml
+    uses: ./.github/workflows/release.yml
     with:
       target-env: development
     secrets: inherit

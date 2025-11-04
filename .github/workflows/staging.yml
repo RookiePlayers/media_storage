@@ -34,7 +34,7 @@ jobs:
   deploy:
     needs: create-release
     name: Deploy to Staging Environment
-    uses: ./.github/workflows/cd/deploy.yml
+    uses: ./.github/workflows/deploy.yml
     with:
       target-env: staging
     secrets: inherit
