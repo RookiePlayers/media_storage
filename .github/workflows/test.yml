@@ -1,9 +1,8 @@
 name: Workflow for development
 
 on:
-  # Carry out builds on all push events (exclude production)
   push:
-    branches-ignore:
+    branches:
     - 'feature/*'
     - 'hotfix/*'
 
