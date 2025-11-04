@@ -1,0 +1,40 @@
+name: Workflow for development
+
+on:
+  # Carry out builds on all push events (exclude production)
+  push:
+    branches-ignore:
+    - 'develop'
+  workflow_dispatch:
+
+jobs:
+  development-ci:
+    name: Perform CI flow for development
+    uses: ./.github/workflows/ci.yml
+    with:
+      target-env: development
+    secrets: inherit
+    
+  build:
+    needs: development-ci
+    name:  Build Release
+    uses: ./.github/workflows/build.yml
+    with:
+      target-env: development
+    secrets: inherit
+
+  create-release:
+    needs: build
+    name: Tag Release
+    uses: ./.github/workflows/release.yml
+    with:
+      target-env: development
+    secrets: inherit
+
+  deploy:
+    needs: create-release
+    name: Deploy to Development Environment
+    uses: ./.github/workflows/cd/deploy.yml
+    with:
+    target-env: development
+    secrets: inherit

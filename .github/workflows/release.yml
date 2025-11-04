@@ -1,0 +1,78 @@
+name: Tagged release
+
+on:
+  workflow_call:
+    inputs:
+      target-env:
+        required: true
+        type: string
+
+jobs:
+  release:
+    name: Release on Conventional Commit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Required for semantic-release to analyze commits and push tags
+          path: ./
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm install --immutable
+
+      - name: Run Semantic Release
+        id: semantic
+        run: npx semantic-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Extract latest tag (version)
+        if: success()
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "Latest release: $LATEST_TAG"
+          echo "$LATEST_TAG" > version.txt
+          # Set the version as an output
+          echo "::set-output name=version::$LATEST_TAG"
+      
+      - name: Extract latest changelog section
+        if: success()
+        run: |
+            awk '/^## /{if (seen) exit; seen=1} seen' CHANGELOG.md > changelog.txt
+
+      - name: Upload Release Version
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-version
+          path: version.txt
+
+      - name: Upload Changelog Artifact
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-changelog
+          path: changelog.txt
+
+      - name: Upload Build Artifacts (optional)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./dist/

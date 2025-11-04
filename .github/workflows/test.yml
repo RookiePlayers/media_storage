@@ -1,0 +1,19 @@
+name: Workflow for development
+
+on:
+  # Carry out builds on all push events (exclude production)
+  push:
+    branches-ignore:
+    - 'feature/*'
+    - 'hotfix/*'
+
+  workflow_dispatch:
+
+jobs:
+  development-ci:
+    name: Perform CI flow for Development
+    uses: ./.github/workflows/ci.yml
+    with:
+      target-env: development
+    secrets: inherit
+  
