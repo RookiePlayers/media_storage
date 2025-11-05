@@ -1,24 +1,29 @@
 {
   "name": "universal_media_storage",
   "version": "1.0.4",
-  "description": "A media storage helper, allowing storage to firebase storage, cloudflare r2, aws s2 and more buckets. ",
-  "main": "./dist/index.js",
+  "description": "A media storage helper, allowing storage to firebase storage, cloudflare r2, aws s2 and more buckets.",
+ "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     }
   },
   "files": [
     "dist"
   ],
-  "scripts": {
+
+  "sideEffects": false,
+    "scripts": {
     "test": "jest --passWithNoTests --runInBand --detectOpenHandles --logHeapUsage --coverage",
     "test:watch": "jest --watch",
     "postinstall": "npx husky install",
     "prepare": "npm run build",
-    "build": "tsc -p .",
+    "build": "tsup",
     "lint": "eslint . --ext .ts"
   },
   "repository": {
@@ -50,6 +55,7 @@
     "nodemon": "^3.1.10",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
