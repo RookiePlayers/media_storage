@@ -1,8 +1,8 @@
 {
   "name": "universal_media_storage",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "A media storage helper, allowing storage to firebase storage, cloudflare r2, aws s2 and more buckets.",
- "main": "./dist/index.cjs",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -16,9 +16,8 @@
   "files": [
     "dist"
   ],
-
   "sideEffects": false,
-    "scripts": {
+  "scripts": {
     "test": "jest --passWithNoTests --runInBand --detectOpenHandles --logHeapUsage --coverage",
     "test:watch": "jest --watch",
     "postinstall": "npx husky install",

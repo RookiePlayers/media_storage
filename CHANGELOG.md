@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/RookiePlayers/media_storage/compare/v1.0.4...v1.1.0) (2025-11-05)
+
+
+### Features
+
+* Update package configuration and add tsup for build process ([e116200](https://github.com/RookiePlayers/media_storage/commit/e1162002a47b1f00cf3eb2a08b213ffe83ee548b))
+
 ## [1.0.4](https://github.com/RookiePlayers/media_storage/compare/v1.0.3...v1.0.4) (2025-11-05)
 
 
