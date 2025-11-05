@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // verify/universalVerify.ts
 import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { drive_v3 } from 'googleapis';

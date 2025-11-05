@@ -8,7 +8,7 @@ const key = crypto.randomBytes(32);
 const iv = crypto.randomBytes(16);
 
 export const encrypt = (text: string): string => {
-    let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+    const cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
     let encrypted = cipher.update(text);
     encrypted = Buffer.concat([encrypted, cipher.final()]);
     return iv.toString('hex') + ':' + encrypted.toString('hex');
@@ -38,10 +38,10 @@ export const decryptV2 = (encrypted: string, iv: string, tag: string, key: strin
 }
 
 export const decrypt = (text: string): string => {
-    let textParts = text.split(':');
-    let iv = Buffer.from(textParts.shift()!, 'hex');
-    let encryptedText = Buffer.from(textParts.join(':'), 'hex');
-    let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+    const textParts = text.split(':');
+    const iv = Buffer.from(textParts.shift()!, 'hex');
+    const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
     let decrypted = decipher.update(encryptedText);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
     return decrypted.toString();
@@ -61,6 +61,7 @@ function shortHash(hex: string, len = 16) {
   return hex.slice(0, len);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function extFromNameOrMime(name: string, _mime?: string) {
    const ext = path.extname(name).replace(/^\./, "");
     return ext || "bin";

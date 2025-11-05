@@ -5,9 +5,14 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "jest --passWithNoTests --runInBand --detectOpenHandles --logHeapUsage --coverage",
     "test:watch": "jest --watch",
@@ -55,6 +60,7 @@
     "firebase-admin": "^13.5.0",
     "google-auth-library": "^10.5.0",
     "googleapis": "^164.1.0",
-    "stream": "^0.0.3"
+    "stream": "^0.0.3",
+    "typescript-eslint": "^8.46.3"
   }
 }
