@@ -25,16 +25,8 @@ jobs:
 
   create-release:
     needs: build
-    name: Tag Release
+    name: Tag Release & Deploy
     uses: ./.github/workflows/release.yml
-    with:
-      target-env: staging
-    secrets: inherit
-
-  deploy:
-    needs: create-release
-    name: Deploy to Staging Environment
-    uses: ./.github/workflows/deploy.yml
     with:
       target-env: staging
     secrets: inherit
