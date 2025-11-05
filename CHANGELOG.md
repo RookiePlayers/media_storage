@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/RookiePlayers/media_storage/compare/v1.0.3...v1.0.4) (2025-11-05)
+
+
+### Bug Fixes
+
+* Update workflow names to reflect deployment actions and enable npm publishing ([0c3907e](https://github.com/RookiePlayers/media_storage/commit/0c3907e5888eb3e91667e156688ba4fde4f705c1))
+
 ## [1.0.3](https://github.com/RookiePlayers/media_storage/compare/v1.0.2...v1.0.3) (2025-11-05)
 
 
