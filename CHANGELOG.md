@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/RookiePlayers/media_storage/compare/v1.0.2...v1.0.3) (2025-11-05)
+
+
+### Bug Fixes
+
+* Update package.json and tsconfig.json for improved module resolution and output structure ([5a39d3e](https://github.com/RookiePlayers/media_storage/commit/5a39d3e1e9ce63e6f0b1b8443a8f0c92813ce84d))
+
 ## [1.0.2](https://github.com/RookiePlayers/media_storage/compare/v1.0.1...v1.0.2) (2025-11-04)
 
 
