@@ -49,7 +49,6 @@ export class GoogleDriveStorageService extends BaseStorageService implements ISt
         auth: this.auth,
       });
 
-      console.log('Setting public permission for file ID:', googleResponse.id);
 
       await drive.permissions.create({
         fileId: googleResponse.id,
@@ -109,7 +108,6 @@ export class GoogleDriveStorageService extends BaseStorageService implements ISt
         fields: "id",
         supportsAllDrives: shouldSupportSharedDrives,
       });
-      console.log('File uploaded to Drive with ID:', resp.data.id);
       const links = await this.generatePublicUrlForDrive({
         googleResponse: resp.data,
         params:  {

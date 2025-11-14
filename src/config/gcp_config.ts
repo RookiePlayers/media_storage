@@ -11,7 +11,6 @@ export const GCPConfig = () => {
         }
         const GCP_SERVICE_ACCOUNT_BUFFER = Buffer.from(gcpServiceAccountBase64, 'base64');
         GCP_SERVICE_ACCOUNT = JSON.parse(GCP_SERVICE_ACCOUNT_BUFFER.toString('utf-8'));
-        console.log('Successfully parsed GCP service account credentials.', GCP_SERVICE_ACCOUNT);
     } catch (error) {
         console.error('Failed to parse GCP service account credentials:', error);
     }
