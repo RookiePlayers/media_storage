@@ -40,13 +40,17 @@ jest.mock('../src/config/firebase_config', () => {
 
   return {
     firebaseStorage: { bucket: () => bucketObj },
-    FirebaseConfig: jest.fn(() => undefined), // ctor safe
+    FirebaseConfig: jest.fn(() => {
+      return {
+        firebaseStorage: { bucket: () => bucketObj }
+      };
+    }), // ctor safe
   };
 });
 
 describe('FirebaseStorageService', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     EnvironmentRegister.getInstance().registerEnvironments({
       firebase_service_account_key_base64: 'dummy', // not decoded in test
       firebase_storage_bucket: 'test-bucket',

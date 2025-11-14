@@ -25,7 +25,7 @@
  * ```
  */
 import { BaseStorageService } from '../utils/baseStorage';
-import { FirebaseConfig, firebaseStorage } from '../config/firebase_config';
+import { FirebaseConfig } from '../config/firebase_config';
 import { IStorageService } from '../iStorage';
 import { UploadParams, StorageResult, StorageProvider } from '../types';
 import { computeSRI, hashString } from '../utils/encryptions';
@@ -35,6 +35,7 @@ import EnvironmentRegister from '../register';
 export class FirebaseStorageService extends BaseStorageService implements IStorageService {
 
   provider: StorageProvider = 'firebase';
+  private firebaseStorage;
 
   constructor() {
     super(); 
@@ -42,7 +43,7 @@ export class FirebaseStorageService extends BaseStorageService implements IStora
       'firebase_service_account_key_base64',
       'firebase_storage_bucket'
     ])
-    FirebaseConfig();
+    this.firebaseStorage = FirebaseConfig().firebaseStorage;
   }
 
   /**
@@ -62,7 +63,7 @@ export class FirebaseStorageService extends BaseStorageService implements IStora
    */
    async uploadFile(objectParams: UploadParams): Promise<StorageResult> {
     try {
-      const storage = firebaseStorage.bucket();
+      const storage = this.firebaseStorage.bucket();
       const buffer = Buffer.from(objectParams.file.data);
       const filePath = `${objectParams.uploadPath ?? `STR_${Date.now()}`}/${objectParams.file.name}`;
       const fileToStore = storage.file(filePath);

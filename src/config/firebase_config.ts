@@ -19,8 +19,9 @@ export const FirebaseConfig = () => {
         credential: cert(config),
         storageBucket: bucket
     };
-    initializeApp(firebaseAdminConfig);
-
+  
+  initializeApp(firebaseAdminConfig);
+  return {
+    firebaseStorage: getStorage(),
+  }
 }
-
-export const firebaseStorage = getStorage();
