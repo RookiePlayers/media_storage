@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/RookiePlayers/media_storage/compare/v1.1.2...v1.1.3) (2025-11-14)
+
+
+### Bug Fixes
+
+* FirebaseAppError: The default Firebase app does not exist ([cfa69bb](https://github.com/RookiePlayers/media_storage/commit/cfa69bb62790c2c3a1a40de3801f219a2cde10cd))
+
 ## [1.1.2](https://github.com/RookiePlayers/media_storage/compare/v1.1.1...v1.1.2) (2025-11-14)
 
 
