@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/RookiePlayers/media_storage/compare/v1.1.0...v1.1.1) (2025-11-14)
+
+
+### Bug Fixes
+
+* Cannot find module ([a177525](https://github.com/RookiePlayers/media_storage/commit/a1775255c11bb83bc1bc0dfaf37c6ec19304e3e8))
+
 # [1.1.0](https://github.com/RookiePlayers/media_storage/compare/v1.0.4...v1.1.0) (2025-11-05)
 
 
