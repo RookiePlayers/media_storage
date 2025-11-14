@@ -31,19 +31,34 @@ import { UploadParams, StorageResult, StorageProvider } from '../types';
 import { computeSRI, hashString } from '../utils/encryptions';
 import { verifyStorage } from '../utils/universalIntegrityVerifier';
 import EnvironmentRegister from '../register';
+import { Storage } from 'firebase-admin/storage';
 
 export class FirebaseStorageService extends BaseStorageService implements IStorageService {
 
   provider: StorageProvider = 'firebase';
-  private firebaseStorage;
+  private firebaseStorage?: Storage;
+  private initialized = false;
 
   constructor() {
     super(); 
+  }
+
+  async init(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
     EnvironmentRegister.getInstance().requiredSubset([
       'firebase_service_account_key_base64',
       'firebase_storage_bucket'
     ])
     this.firebaseStorage = FirebaseConfig().firebaseStorage;
+    this.initialized = true;
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized) {
+      await this.init();
+    }
   }
 
   /**
@@ -63,6 +78,10 @@ export class FirebaseStorageService extends BaseStorageService implements IStora
    */
    async uploadFile(objectParams: UploadParams): Promise<StorageResult> {
     try {
+      await this.ensureInitialized();
+      if(!this.firebaseStorage) {
+        throw new Error('Firebase Storage not initialized. Call init() first.');
+      }
       const storage = this.firebaseStorage.bucket();
       const buffer = Buffer.from(objectParams.file.data);
       const filePath = `${objectParams.uploadPath ?? `STR_${Date.now()}`}/${objectParams.file.name}`;

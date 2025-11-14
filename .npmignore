@@ -1,4 +1,5 @@
 src/
+example/
 tests/
 node_modules/
 *.log

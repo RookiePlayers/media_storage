@@ -9,9 +9,11 @@ import { EnvironmentConfig } from "./types";
 export default class EnvironmentRegister {
   private static instance: EnvironmentRegister;
   private environments: Partial<EnvironmentConfig>;
+  private requiredKeys: Set<keyof EnvironmentConfig>;
 
   private constructor() {
     this.environments = {};
+    this.requiredKeys = new Set();
   }
 
   public static getInstance(): EnvironmentRegister {
@@ -36,6 +38,18 @@ export default class EnvironmentRegister {
    */
   public registerEnvironments(configs: Partial<EnvironmentConfig>): void {
     this.environments = { ...this.environments, ...configs };
+    console.log("[Media Storage] Registered environments:", Object.keys(configs));
+  }
+
+  /**
+   * Get a value or throw a clear error (great for boot-time checks).
+   */
+  public require<K extends keyof EnvironmentConfig>(name: K): NonNullable<EnvironmentConfig[K]> {
+    const value = this.getEnvironment(name);
+    if (value === undefined || value === null || value === '') {
+      throw new Error(`EnvironmentRegister: required key "${String(name)}" is missing`);
+    }
+    return value as NonNullable<EnvironmentConfig[K]>;
   }
 
   /**
@@ -47,15 +61,11 @@ export default class EnvironmentRegister {
     return this.environments[name] as EnvironmentConfig[K] | undefined;
   }
 
-  /**
-   * Get a value or throw a clear error (great for boot-time checks).
-   */
-  public require<K extends keyof EnvironmentConfig>(name: K): NonNullable<EnvironmentConfig[K]> {
-    const v = this.getEnvironment(name);
-    if (v === undefined || v === null || v === "") {
-      throw new Error(`EnvironmentRegister: required key "${String(name)}" is missing`);
+  checkRequired(): void {
+    const missing = Array.from(this.requiredKeys).filter(key => this.getEnvironment(key) === undefined);
+    if (missing.length > 0) {
+      throw new Error(`EnvironmentRegister: missing required keys: ${missing.join(", ")}`);
     }
-    return v as NonNullable<EnvironmentConfig[K]>;
   }
 
   public requiredSubset<K extends keyof EnvironmentConfig>(
@@ -63,6 +73,7 @@ export default class EnvironmentRegister {
   ): { [P in K]: NonNullable<EnvironmentConfig[P]> } {
     const result = {} as { [P in K]: NonNullable<EnvironmentConfig[P]> };
     keys.forEach((key) => {
+      this.requiredKeys.add(key);
       result[key] = this.require(key);
     });
     return result;

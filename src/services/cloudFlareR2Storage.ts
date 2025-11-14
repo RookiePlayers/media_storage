@@ -46,18 +46,25 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
   provider: StorageProvider = 'r2';
 
   /** Environment variables for R2 setup */
-  private R2_ACCOUNT_ID: string; 
-  private R2_BUCKET: string;
-  private R2_ACCESS_KEY_ID: string;
-  private R2_SECRET: string;
-  private CDN_BASE: string;
-
+  private R2_ACCOUNT_ID?: string; 
+  private R2_BUCKET?: string;
+  private R2_ACCESS_KEY_ID?: string;
+  private R2_SECRET?: string;
+  private CDN_BASE?: string;
   /** S3-compatible client configured for Cloudflare R2 */
-  private s3: S3Client;
+  private s3?: S3Client;
+  private initialized = false;
 
   constructor() {
     super();
-     EnvironmentRegister.getInstance().requiredSubset([
+   
+  }
+
+  async init(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+    EnvironmentRegister.getInstance().requiredSubset([
       'r2_account_id',
       'r2_bucket',
       'r2_access_key_id',
@@ -79,6 +86,13 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
         secretAccessKey: this.R2_SECRET,
       },
     });
+    this.initialized = true;
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized) {
+      await this.init();
+    }
   }
 
   /**
@@ -97,6 +111,7 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
    */
   async uploadFile(objectParams: UploadParams): Promise<StorageResult> {
     try {
+      await this.ensureInitialized();
       const { file, uploadPath = `OBJ_${Date.now()}` } = objectParams;
 
     // Build immutable key (for path) + compute integrity from CONTENT BYTES
@@ -116,6 +131,9 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
     // --------------------------
     let exists = false;
     try {
+      if(!this.s3) {
+        throw new Error('S3 client not initialized. Call init() first.');
+      }
       const head = await this.s3.send(new HeadObjectCommand({
         Bucket: this.R2_BUCKET,
         Key: key,
@@ -143,6 +161,9 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
     // --------------------------
     if (!exists) {
       try {
+        if(!this.s3) {
+          throw new Error('S3 client not initialized. Call init() first.');
+        }
         await this.s3.send(new PutObjectCommand({
           Bucket: this.R2_BUCKET,
           Key: key,
@@ -168,6 +189,9 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
     // --------------------------
     // 3) Build result & UNIVERSAL VERIFY (HEAD without download)
     // --------------------------
+    if(this.R2_BUCKET === undefined) {
+      throw new Error('R2_BUCKET not set. Call init() first.');
+    }
     const result = this.finalizeResult(
       {
         url,
@@ -180,7 +204,9 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
       },
       {}
     );
-
+    if(!this.s3) {
+      throw new Error('S3 client not initialized. Call init() first.');
+    }
     const outcome = await verifyStorage(result, { r2: { s3: this.s3 } });
 
     if (!outcome.exists) {
@@ -209,8 +235,11 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
    * @param file - File reference ({ uri?: string; name: string }).
    */
   async deleteFile(uploadPath: string, file: { uri?: string; name: string }): Promise<void> {
+    await this.ensureInitialized();
     const key = this.normalizeKey(uploadPath, file);
-
+    if(!this.s3) {
+      throw new Error('S3 client not initialized. Call init() first.');
+    }
     await this.s3.send(
       new DeleteObjectCommand({
         Bucket: this.R2_BUCKET,

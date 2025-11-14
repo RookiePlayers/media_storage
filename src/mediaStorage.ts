@@ -20,6 +20,10 @@ export class MediaStorage {
     const env = EnvironmentRegister.getInstance();
     if (hydrateFromEnv) env.loadFromProcessEnv();
     if (config) env.registerEnvironments(config);
+    if ('init' in service && typeof service.init === 'function') {
+      void service.init();
+    }
+    env.checkRequired();
     this.mediaStorage = service;
   }
 
