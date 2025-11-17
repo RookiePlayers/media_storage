@@ -26,6 +26,10 @@ on:
 env:
   NODE_VERSION: ${{ inputs.node_version || '20' }}
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   publish:
     name: Publish to NPM
@@ -99,11 +103,26 @@ jobs:
           echo "dist_tag=$DIST_TAG" >> $GITHUB_OUTPUT
           echo "Using dist-tag: $DIST_TAG (latest tag: ${LATEST_TAG:-none}, target-env: ${TARGET_ENV:-none})"
 
+      - name: Check commit type
+        id: commit_check
+        run: |
+          set -euo pipefail
+          COMMIT_MSG="$(git log -1 --pretty=%s)"
+          echo "Latest commit subject: $COMMIT_MSG"
+          if echo "$COMMIT_MSG" | grep -Eq '^(feat|fix)(\(|:)'; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "Commit qualifies for publish."
+          else
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "Commit does not qualify (requires feat|fix)."
+          fi
+
       - name: Show npm pack (dry)
+        if: ${{ steps.commit_check.outputs.should_publish == 'true' }}
         run: npm pack --dry-run
 
       - name: Publish
-        if: ${{ inputs.dry_run != true }}
+        if: ${{ inputs.dry_run != true && steps.commit_check.outputs.should_publish == 'true' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -111,11 +130,16 @@ jobs:
           npm publish --access public --tag "${{ steps.dist.outputs.dist_tag }}" --provenance || \
           npm publish --access public --tag "${{ steps.dist.outputs.dist_tag }}"
 
+      - name: Skip message
+        if: ${{ steps.commit_check.outputs.should_publish != 'true' }}
+        run: echo "Latest commit is not a feat*/fix*, skipping publish steps."
+
       - name: Dry run note
-        if: ${{ inputs.dry_run == true }}
+        if: ${{ inputs.dry_run == true && steps.commit_check.outputs.should_publish == 'true' }}
         run: echo "Dry run enabled — skipping publish."
 
       - name: Post-publish info
+        if: ${{ steps.commit_check.outputs.should_publish == 'true' }}
         run: |
           NAME=$(node -p "require('./package.json').name")
           VERSION=$(node -p "require('./package.json').version")

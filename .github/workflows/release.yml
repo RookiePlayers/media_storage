@@ -6,7 +6,9 @@ on:
       target-env:
         required: true
         type: string
-
+permissions:
+  contents: write
+  id-token: write 
 jobs:
   release:
     name: Release on Conventional Commit
@@ -22,6 +24,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20.x
+          registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
       - name: Cache npm dependencies
         uses: actions/cache@v3
@@ -38,8 +41,9 @@ jobs:
         id: semantic
         run: npx semantic-release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Extract latest tag (version)
         if: success()
