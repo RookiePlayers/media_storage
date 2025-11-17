@@ -6,7 +6,9 @@ on:
     branches-ignore:
     - 'develop'
   workflow_dispatch:
-
+permissions: 
+  contents: read
+  id-token: write
 jobs:
   development-ci:
     name: Perform CI flow for development
