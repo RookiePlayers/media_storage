@@ -45,15 +45,20 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Extract latest tag (version)
+      - name: Capture bumped version
         if: success()
+        id: release_meta
+        shell: bash
         run: |
-          git fetch --tags
-          LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-          echo "Latest release: $LATEST_TAG"
-          echo "$LATEST_TAG" > version.txt
-          # Set the version as an output
-          echo "::set-output name=version::$LATEST_TAG"
+          set -euo pipefail
+          VERSION="$(node -pe "require('./package.json').version")"
+          TAG="v${VERSION}"
+          echo "Latest release: ${TAG}"
+          printf "%s\n" "${TAG}" > version.txt
+          {
+            echo "version=${VERSION}"
+            echo "tag=${TAG}"
+          } >> "$GITHUB_OUTPUT"
       
       - name: Extract latest changelog section
         if: success()
