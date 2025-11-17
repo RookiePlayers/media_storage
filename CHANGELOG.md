@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/RookiePlayers/media_storage/compare/v1.1.4...v1.1.5) (2025-11-17)
+
+
+### Bug Fixes
+
+* Enhance deployment workflows with commit type checks and permissions ([2a8565f](https://github.com/RookiePlayers/media_storage/commit/2a8565f35dc35fffde9c3f1ded685874705e8e25))
+
 ## [1.1.4](https://github.com/RookiePlayers/media_storage/compare/v1.1.3...v1.1.4) (2025-11-17)
 
 
