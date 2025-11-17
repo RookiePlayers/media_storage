@@ -33,3 +33,11 @@ jobs:
     with:
       target-env: production
     secrets: inherit
+
+  deploy:
+    needs: create-release
+    name: Publish to NPM
+    uses: ./.github/workflows/deploy.yml
+    with:
+      target-env: production
+    secrets: inherit
