@@ -8,7 +8,7 @@ on:
         type: string
 permissions:
   contents: write
-  id-token: write 
+  id-token: write
 jobs:
   release:
     name: Release on Conventional Commit
@@ -18,14 +18,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Required for semantic-release to analyze commits and push tags
+          fetch-depth: 0 # Required for semantic-release to analyze commits and push tags
           path: ./
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 20.x
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+          node-version: 24.x
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
       - name: Cache npm dependencies
         uses: actions/cache@v3
         with:
@@ -45,25 +45,20 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Capture bumped version
+      - name: Extract latest tag (version)
         if: success()
-        id: release_meta
-        shell: bash
         run: |
-          set -euo pipefail
-          VERSION="$(node -pe "require('./package.json').version")"
-          TAG="v${VERSION}"
-          echo "Latest release: ${TAG}"
-          printf "%s\n" "${TAG}" > version.txt
-          {
-            echo "version=${VERSION}"
-            echo "tag=${TAG}"
-          } >> "$GITHUB_OUTPUT"
-      
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "Latest release: $LATEST_TAG"
+          echo "$LATEST_TAG" > version.txt
+          # Set the version as an output
+          echo "::set-output name=version::$LATEST_TAG"
+
       - name: Extract latest changelog section
         if: success()
         run: |
-            awk '/^## /{if (seen) exit; seen=1} seen' CHANGELOG.md > changelog.txt
+          awk '/^## /{if (seen) exit; seen=1} seen' CHANGELOG.md > changelog.txt
 
       - name: Upload Release Version
         continue-on-error: true
