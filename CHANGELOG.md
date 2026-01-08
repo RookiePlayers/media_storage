@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/RookiePlayers/media_storage/compare/v1.2.0...v1.2.1) (2026-01-08)
+
+
+### Bug Fixes
+
+* Examples updates ([56c9ec7](https://github.com/RookiePlayers/media_storage/commit/56c9ec76bfbf80cf7f0aa4e97a7477f2d4df9a48))
+
 # [1.2.0](https://github.com/RookiePlayers/media_storage/compare/v1.1.6...v1.2.0) (2026-01-08)
 
 
