@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/RookiePlayers/media_storage/compare/v1.1.6...v1.2.0) (2026-01-08)
+
+
+### Features
+
+* Added deleteFileFromStorage api ([10acdec](https://github.com/RookiePlayers/media_storage/commit/10acdecfe1d4368591b49c2cdb3158ef21fafb18))
+
 ## [1.1.6](https://github.com/RookiePlayers/media_storage/compare/v1.1.5...v1.1.6) (2025-11-17)
 
 
