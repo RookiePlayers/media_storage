@@ -1,4 +1,4 @@
-import { initializeApp, cert } from "firebase-admin/app";
+import { initializeApp, cert, getApp, getApps } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import EnvironmentRegister from "../register";
 
@@ -15,13 +15,15 @@ export const FirebaseConfig = () => {
     } catch (e) {
     console.error('Error parsing Firebase Admin SDK config[Make sure to add FIREBASE_SERVICE_ACCOUNT_BASE64 to your .env]: ', e);
     }
-    const firebaseAdminConfig = {
-        credential: cert(config),
+    const firebaseAdminConfig: { credential?: ReturnType<typeof cert>; storageBucket?: string } = {
         storageBucket: bucket
     };
+    if (config) {
+        firebaseAdminConfig.credential = cert(config);
+    }
   
-  initializeApp(firebaseAdminConfig);
+  const app = getApps().length ? getApp() : initializeApp(firebaseAdminConfig);
   return {
-    firebaseStorage: getStorage(),
+    firebaseStorage: getStorage(app),
   }
 }

@@ -144,6 +144,15 @@ function init() {
     })
 ```
 
+Firebase app reuse (safe to call multiple times in the same process):
+
+```ts
+import { FirebaseStorageService } from "../src/services/firebaseStorage";
+
+const serviceA = new FirebaseStorageService();
+const serviceB = new FirebaseStorageService(); // reuses the existing Firebase app
+```
+
 ---
 
 ### 2. Integrity Verification
