@@ -1,10 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
+import { S3Client } from "@aws-sdk/client-s3";
 import { CloudFlareR2StorageService } from "../src/services/cloudFlareR2Storage";
 import { FirebaseStorageService } from "../src/services/firebaseStorage";
 import { GoogleDriveStorageService } from "../src/services/googleDriveStorage";
 import {MediaStorage} from "../src/MediaStorage";
+import { deleteFileFromStorage } from "../src/utils/deleteFileFromStorage";
 
 function init() {
     const fb_storage =new MediaStorage(
@@ -34,6 +36,15 @@ function init() {
             gcp_drive_scopes: process.env.GCP_DRIVE_SCOPES || '',
         }
     })
+
+    const r2Client = new S3Client({
+        region: 'auto',
+        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+            accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+            secretAccessKey: process.env.R2_ACCESS_KEY_SECRET || '',
+        },
+    });
     gd_storage.uploadFile({
         // For Google Drive, you can specify parent folder IDs to organize files
         parentPathIds:[
@@ -50,6 +61,24 @@ function init() {
         console.log('File uploaded:', result);
     }).catch(err => {
         console.error('Upload error:', err);
+    })
+
+    r2_storage.uploadFile({
+        file: {
+            name: 'delete-me.txt',
+            mimetype: 'text/plain',
+            data: Buffer.from('Delete me after upload'),
+        },
+        uploadPath: 'example',
+    }).then(async result => {
+        console.log('R2 file uploaded:', result);
+
+        if (process.env.DELETE_AFTER_UPLOAD === 'true') {
+            await deleteFileFromStorage(result, { r2: { s3: r2Client } });
+            console.log('R2 file deleted');
+        }
+    }).catch(err => {
+        console.error('R2 upload error:', err);
     })
     const app = express();
     app.use(express.json());

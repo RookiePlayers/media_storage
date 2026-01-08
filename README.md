@@ -17,13 +17,13 @@ A powerful and modular **Node.js media storage library** that provides a unified
 ## 📦 Installation
 
 ```bash
-npm install media-storage
+npm install universal_media_storage
 ```
 
 or with yarn:
 
 ```bash
-yarn add media-storage
+yarn add universal_media_storage
 ```
 
 ---
@@ -41,7 +41,7 @@ yarn add media-storage
 ## 🧠 Core Concepts
 
 ### 1. Storage Service
-Each provider implements a subclass of `BaseStorageService` with a unified `uploadFile`, `deleteFile`, and optional `verifyStorage` API.
+Each provider implements a subclass of `BaseStorageService` with a unified `uploadFile` API. For deletions across providers, use the `deleteFileFromStorage` helper with a `StorageResult.locator`.
 
 ```ts
 interface UploadParams {
@@ -49,28 +49,99 @@ interface UploadParams {
     name: string;
     data: Buffer;
     mimetype: string;
+    uri?: string;
   };
   uploadPath?: string;
+  parentPathIds?: string[];
+  cacheControl?: string;
 }
 ```
 
 Example:
 
 ```ts
-import { CloudFlareR2StorageService } from 'media-storage';
+import dotenv from "dotenv";
+dotenv.config();
+import express from "express";
+import { S3Client } from "@aws-sdk/client-s3";
+import { CloudFlareR2StorageService } from "../src/services/cloudFlareR2Storage";
+import { FirebaseStorageService } from "../src/services/firebaseStorage";
+import { GoogleDriveStorageService } from "../src/services/googleDriveStorage";
+import {MediaStorage} from "../src/MediaStorage";
+import { deleteFileFromStorage } from "../src/utils/deleteFileFromStorage";
 
-const svc = new CloudFlareR2StorageService();
+function init() {
+    const fb_storage =new MediaStorage(
+        {
+            config: {
+                'firebase_service_account_key_base64': process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || '',
+                'firebase_storage_bucket': process.env.FIREBASE_STORAGE_BUCKET || '',
+            
+            },
+            service: new FirebaseStorageService()
+        }
+    );
+    const r2_storage = new MediaStorage({
+        service:new CloudFlareR2StorageService(),
+        config:{
+            r2_account_id: process.env.R2_ACCOUNT_ID || '',
+            r2_bucket: process.env.R2_BUCKET || '',
+            r2_access_key_id: process.env.R2_ACCESS_KEY_ID || '',
+            r2_access_key_secret: process.env.R2_ACCESS_KEY_SECRET || '',
+            r2_cdn_base: process.env.R2_CDN_BASE || '',
+        }
+    })
+    const gd_storage = new MediaStorage({
+        service:new GoogleDriveStorageService(),
+        config:{
+            gcp_service_account_key_base64: process.env.GCP_SERVICE_ACCOUNT_KEY_BASE64 || '',
+            gcp_drive_scopes: process.env.GCP_DRIVE_SCOPES || '',
+        }
+    })
 
-const result = await svc.uploadFile({
-  file: {
-    name: 'example.png',
-    mimetype: 'image/png',
-    data: fs.readFileSync('example.png'),
-  },
-  uploadPath: 'assets',
-});
+    const r2Client = new S3Client({
+        region: 'auto',
+        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+            accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+            secretAccessKey: process.env.R2_ACCESS_KEY_SECRET || '',
+        },
+    });
+    gd_storage.uploadFile({
+        // For Google Drive, you can specify parent folder IDs to organize files
+        parentPathIds:[
+            process.env.PARENT_FOLDER_ID || ''
+        ],
+        //--------------------------------------
+        file: {
+            name: 'test.txt',
+            mimetype: 'text/plain',
+            data: Buffer.from('Hello, world!')
+        },
+        uploadPath: 'test'
+    }).then(result => {
+        console.log('File uploaded:', result);
+    }).catch(err => {
+        console.error('Upload error:', err);
+    })
 
-console.log(result);
+    r2_storage.uploadFile({
+        file: {
+            name: 'delete-me.txt',
+            mimetype: 'text/plain',
+            data: Buffer.from('Delete me after upload'),
+        },
+        uploadPath: 'example',
+    }).then(async result => {
+        console.log('R2 file uploaded:', result);
+
+        if (process.env.DELETE_AFTER_UPLOAD === 'true') {
+            await deleteFileFromStorage(result, { r2: { s3: r2Client } });
+            console.log('R2 file deleted');
+        }
+    }).catch(err => {
+        console.error('R2 upload error:', err);
+    })
 ```
 
 ---
@@ -99,6 +170,21 @@ Sample output:
 
 ---
 
+### 3. Deleting Files (Universal)
+
+Use the `deleteFileFromStorage` helper with the `locator` returned by `uploadFile`.
+
+```ts
+import { deleteFileFromStorage } from 'media-storage';
+import { S3Client } from '@aws-sdk/client-s3';
+
+const r2Client = new S3Client({ region: 'auto', endpoint: 'https://<account>.r2.cloudflarestorage.com' });
+
+await deleteFileFromStorage(result, { r2: { s3: r2Client } });
+```
+
+---
+
 ## ⚙️ Environment Configuration
 
 Environment variables are managed by the built-in `EnvironmentRegister` class. You can register them at runtime or load from process.env.
@@ -117,8 +203,11 @@ R2_ACCOUNT_ID=your-account
 R2_BUCKET=media
 R2_ACCESS_KEY_ID=xxxx
 R2_ACCESS_KEY_SECRET=xxxx
+CDN_BASE=https://cdn.example.com
 FIREBASE_STORAGE_BUCKET=my-app.appspot.com
+FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=...base64...
 GCP_SERVICE_ACCOUNT_KEY_BASE64=...base64...
+GCP_DRIVE_SCOPES=https://www.googleapis.com/auth/drive.file
 ```
 
 ---
@@ -145,16 +234,18 @@ Key tests:
 ```
 media_storage/
  ├── src/
- │   ├── register/                # Environment config
+ │   ├── register.ts              # Environment config
  │   ├── services/                # Provider implementations
  │   │   ├── cloudFlareR2Storage.ts
  │   │   ├── firebaseStorage.ts
  │   │   └── googleDriveStorage.ts
  │   ├── utils/                   # Common utilities
  │   │   ├── encryptions.ts
+ │   │   ├── deleteFileFromStorage.ts
+ │   │   ├── integrity.ts
  │   │   ├── universalIntegrityVerifier.ts
  │   │   └── validate.ts
- │   └── types/                   # Type definitions
+ │   └── types.ts                 # Type definitions
  │
  ├── __tests__/                   # Jest test suite
  ├── package.json
@@ -166,4 +257,3 @@ media_storage/
 ## 📜 License
 
 MIT License © 2025 [Rookie Players]
-

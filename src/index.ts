@@ -5,3 +5,4 @@ export * from "./services/googleDriveStorage";
 export * from "./iStorage";
 export * from './register';
 export * from "./types";
+export * from "./utils/deleteFileFromStorage";
