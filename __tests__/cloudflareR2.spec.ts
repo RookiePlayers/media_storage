@@ -344,3 +344,14 @@ it('deleteFile sends DeleteObjectCommand with normalized key', async () => {
     })
   );
 });
+
+// 8) deleteFile returns success
+it('deleteFile returns success', async () => {
+  const svc = new CloudFlareR2StorageService();
+
+  sendMock.mockImplementation(() => ({}));
+
+  const res = await svc.deleteFile('uploads', { uri: '/images/photo.png', name: 'ignored.png' });
+
+  expect(res).toEqual({ success: true });
+});

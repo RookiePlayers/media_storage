@@ -41,7 +41,7 @@ yarn add universal_media_storage
 ## 🧠 Core Concepts
 
 ### 1. Storage Service
-Each provider implements a subclass of `BaseStorageService` with a unified `uploadFile` API. For deletions across providers, use the `deleteFileFromStorage` helper with a `StorageResult.locator`.
+Each provider implements a subclass of `BaseStorageService` with a unified `uploadFile` API. For deletions, you can either call the provider's `deleteFile` method directly or use the `deleteFileFromStorage` helper with a `StorageResult.locator`.
 
 ```ts
 interface UploadParams {
@@ -68,7 +68,6 @@ import { CloudFlareR2StorageService } from "../src/services/cloudFlareR2Storage"
 import { FirebaseStorageService } from "../src/services/firebaseStorage";
 import { GoogleDriveStorageService } from "../src/services/googleDriveStorage";
 import {MediaStorage} from "../src/MediaStorage";
-import { deleteFileFromStorage } from "../src/utils/deleteFileFromStorage";
 
 function init() {
     const fb_storage =new MediaStorage(
@@ -121,6 +120,14 @@ function init() {
         uploadPath: 'test'
     }).then(result => {
         console.log('File uploaded:', result);
+        if (process.env.DELETE_AFTER_UPLOAD === 'true') {
+            const fileId = result.locator?.provider === 'drive' ? result.locator.fileId : undefined;
+            if (fileId) {
+                gd_storage.deleteFile(fileId).then(() => {
+                    console.log('Drive file deleted');
+                }).catch(err => console.error('Drive delete error:', err));
+            }
+        }
     }).catch(err => {
         console.error('Upload error:', err);
     })
@@ -136,8 +143,11 @@ function init() {
         console.log('R2 file uploaded:', result);
 
         if (process.env.DELETE_AFTER_UPLOAD === 'true') {
-            await deleteFileFromStorage(result, { r2: { s3: r2Client } });
-            console.log('R2 file deleted');
+            const key = result.locator?.provider === 'r2' ? result.locator.key : undefined;
+            if (key) {
+                await r2_storage.deleteFile(undefined, key);
+                console.log('R2 file deleted');
+            }
         }
     }).catch(err => {
         console.error('R2 upload error:', err);
@@ -179,7 +189,72 @@ Sample output:
 
 ---
 
-### 3. Deleting Files (Universal)
+### 3. Uploading Files
+
+The `uploadFile` method returns a `StorageResult` with URLs, integrity, size, and a provider-specific `locator` that includes `fileId` and `filePath`.
+
+Cloudflare R2:
+
+```ts
+const r2Result = await r2_storage.uploadFile({
+  file: {
+    name: 'avatar.png',
+    mimetype: 'image/png',
+    data: Buffer.from('...'),
+  },
+  uploadPath: 'profiles/user123',
+});
+```
+
+Firebase Storage:
+
+```ts
+const fbResult = await fb_storage.uploadFile({
+  file: {
+    name: 'avatar.png',
+    mimetype: 'image/png',
+    data: Buffer.from('...'),
+  },
+  uploadPath: 'profiles/user123',
+});
+```
+
+Google Drive:
+
+```ts
+const gdResult = await gd_storage.uploadFile({
+  parentPathIds: ['<drive-folder-id>'],
+  file: {
+    name: 'avatar.png',
+    mimetype: 'image/png',
+    data: Buffer.from('...'),
+  },
+});
+```
+
+### 4. Deleting Files (Direct)
+
+You can delete by `fileId` or `filePath`, depending on the provider.
+
+Cloudflare R2:
+
+```ts
+await r2_storage.deleteFile(undefined, r2Result.locator?.filePath);
+```
+
+Firebase Storage:
+
+```ts
+await fb_storage.deleteFile(undefined, fbResult.locator?.filePath);
+```
+
+Google Drive:
+
+```ts
+await gd_storage.deleteFile(gdResult.locator?.fileId);
+```
+
+### 5. Deleting Files (Universal)
 
 Use the `deleteFileFromStorage` helper with the `locator` returned by `uploadFile`.
 

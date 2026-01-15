@@ -15,6 +15,7 @@ const makePublicMock = jest.fn();
 const saveMock = jest.fn();
 const getMetadataMock = jest.fn();
 const existsMock = jest.fn();
+const deleteMock = jest.fn();
 
 // Mock the firebase_config module used by the service & verifier context
 jest.mock('../src/config/firebase_config', () => {
@@ -25,6 +26,7 @@ jest.mock('../src/config/firebase_config', () => {
       makePublic: makePublicMock,
       getMetadata: getMetadataMock,
       exists: existsMock,
+      delete: deleteMock,
       publicUrl: () => `https://storage.googleapis.com/test-bucket/${p}`,
     }),
     // shim for @google-cloud/storage-like API used by verifyStorage
@@ -102,5 +104,16 @@ describe('FirebaseStorageService', () => {
     expect(out.exists).toBe(true);
     expect(out.integrityMatches).toBe(true);
     expect(out.sizeMatches).toBe(true);
+  });
+
+  it('deletes a file by path', async () => {
+    const svc = new FirebaseStorageService();
+
+    deleteMock.mockResolvedValueOnce(undefined);
+
+    const res = await svc.deleteFile(undefined, 'profiles/to-delete.png');
+
+    expect(deleteMock).toHaveBeenCalledWith({ ignoreNotFound: true });
+    expect(res).toEqual({ success: true });
   });
 });

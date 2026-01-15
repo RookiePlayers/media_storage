@@ -1,6 +1,6 @@
 import { IStorageService } from "./iStorage";
 import EnvironmentRegister from "./register";
-import { EnvironmentConfig, UploadParams } from "./types";
+import { DeletionResult, EnvironmentConfig, UploadParams } from "./types";
 
 /**
  * Thin wrapper binding a storage service to a config snapshot.
@@ -33,5 +33,9 @@ export class MediaStorage {
 
   public uploadFile(params: UploadParams) {
     return this.mediaStorage.uploadFile(params);
+  }
+
+  public deleteFile(fileId?: string, filePath?: string): Promise<DeletionResult> {
+    return this.mediaStorage.deleteFile(fileId, filePath);
   }
 }

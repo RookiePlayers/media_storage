@@ -27,7 +27,7 @@
 import { BaseStorageService } from '../utils/baseStorage';
 import { FirebaseConfig } from '../config/firebase_config';
 import { IStorageService } from '../iStorage';
-import { UploadParams, StorageResult, StorageProvider } from '../types';
+import { DeletionResult, UploadParams, StorageResult, StorageProvider } from '../types';
 import { computeSRI, hashString } from '../utils/encryptions';
 import { verifyStorage } from '../utils/universalIntegrityVerifier';
 import EnvironmentRegister from '../register';
@@ -76,7 +76,7 @@ export class FirebaseStorageService extends BaseStorageService implements IStora
    *
    * @throws Will throw an error if the upload fails
    */
-   async uploadFile(objectParams: UploadParams): Promise<StorageResult> {
+  async uploadFile(objectParams: UploadParams): Promise<StorageResult> {
     try {
       await this.ensureInitialized();
       if(!this.firebaseStorage) {
@@ -114,6 +114,8 @@ export class FirebaseStorageService extends BaseStorageService implements IStora
             provider: 'firebase',
             bucket: storage.name,      // same bucket name
             objectPath: filePath,      // path within bucket
+            fileId: filePath,
+            filePath,
           },
           provider: 'firebase',
         },
@@ -140,5 +142,22 @@ export class FirebaseStorageService extends BaseStorageService implements IStora
     } catch (e) {
       throw e;
     }
+  }
+
+  async deleteFile(fileId?: string, filePath?: string): Promise<DeletionResult> {
+    await this.ensureInitialized();
+    if (!this.firebaseStorage) {
+      throw new Error('Firebase Storage not initialized. Call init() first.');
+    }
+
+    const objectPath = filePath ?? fileId;
+    if (!objectPath) {
+      return { success: false, message: 'filePath or fileId is required for Firebase delete.' };
+    }
+
+    const storage = this.firebaseStorage.bucket();
+    const file = storage.file(objectPath);
+    await file.delete({ ignoreNotFound: true });
+    return { success: true };
   }
 }

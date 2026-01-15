@@ -6,7 +6,6 @@ import { CloudFlareR2StorageService } from "../src/services/cloudFlareR2Storage"
 import { FirebaseStorageService } from "../src/services/firebaseStorage";
 import { GoogleDriveStorageService } from "../src/services/googleDriveStorage";
 import {MediaStorage} from "../src/MediaStorage";
-import { deleteFileFromStorage } from "../src/utils/deleteFileFromStorage";
 
 function init() {
     const fb_storage =new MediaStorage(
@@ -59,6 +58,14 @@ function init() {
         uploadPath: 'test'
     }).then(result => {
         console.log('File uploaded:', result);
+        if (process.env.DELETE_AFTER_UPLOAD === 'true') {
+            const fileId = result.locator?.provider === 'drive' ? result.locator.fileId : undefined;
+            if (fileId) {
+                gd_storage.deleteFile(fileId).then(() => {
+                    console.log('Drive file deleted');
+                }).catch(err => console.error('Drive delete error:', err));
+            }
+        }
     }).catch(err => {
         console.error('Upload error:', err);
     })
@@ -74,8 +81,11 @@ function init() {
         console.log('R2 file uploaded:', result);
 
         if (process.env.DELETE_AFTER_UPLOAD === 'true') {
-            await deleteFileFromStorage(result, { r2: { s3: r2Client } });
-            console.log('R2 file deleted');
+            const key = result.locator?.provider === 'r2' ? result.locator.key : undefined;
+            if (key) {
+                await r2_storage.deleteFile(undefined, key);
+                console.log('R2 file deleted');
+            }
         }
     }).catch(err => {
         console.error('R2 upload error:', err);

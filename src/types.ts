@@ -50,23 +50,32 @@ export type StorageResult = {
   provider?: StorageProvider; // helpful redundancy
 };
 
+export type DeletionResult = {
+  success: boolean;
+  message?: string;
+}
 
 export interface StorageLocatorR2 {
   provider: 'r2';
   bucket: string;
   key: string;             // R2 object key
+  fileId?: string;
+  filePath?: string;
 }
 
 export interface StorageLocatorFirebase {
   provider: 'firebase';
   bucket: string;
   objectPath: string;      // gs://<bucket>/<objectPath> (no "gs://")
+  fileId?: string;
+  filePath?: string;
 }
 
 export interface StorageLocatorDrive {
   provider: 'drive';
   fileId: string;
   shouldSupportSharedDrives?: boolean; // aka Team Drives
+  filePath?: string;
 }
 
 export type StorageLocator =

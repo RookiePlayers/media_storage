@@ -33,7 +33,7 @@
  */
 
 import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { StorageProvider, StorageResult, UploadParams } from '../types';
+import { DeletionResult, StorageProvider, StorageResult, UploadParams } from '../types';
 import { buildImmutableKey, computeSRI } from '../utils/encryptions';
 import { IStorageService } from '../iStorage';
 import { BaseStorageService } from '../utils/baseStorage';
@@ -192,18 +192,24 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
     if(this.R2_BUCKET === undefined) {
       throw new Error('R2_BUCKET not set. Call init() first.');
     }
-    const result = this.finalizeResult(
-      {
-        url,
-        downloadUrl: url,
-        key,
-        integrity,                 // SRI from content bytes
-        sizeBytes: file.data.length,
-        locator: { provider: 'r2', bucket: this.R2_BUCKET, key },
-        provider: 'r2',
-      },
-      {}
-    );
+      const result = this.finalizeResult(
+        {
+          url,
+          downloadUrl: url,
+          key,
+          integrity,                 // SRI from content bytes
+          sizeBytes: file.data.length,
+          locator: {
+            provider: 'r2',
+            bucket: this.R2_BUCKET,
+            key,
+            fileId: key,
+            filePath: key,
+          },
+          provider: 'r2',
+        },
+        {}
+      );
     if(!this.s3) {
       throw new Error('S3 client not initialized. Call init() first.');
     }
@@ -231,21 +237,42 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
   /**
    * Deletes a file from Cloudflare R2.
    *
+   * @param fileId - R2 object key (alias for filePath).
+   * @param filePath - R2 object key.
+   */
+  async deleteFile(fileId?: string, filePath?: string): Promise<DeletionResult>;
+  /**
+   * Deletes a file from Cloudflare R2 using legacy params.
+   *
    * @param uploadPath - The logical folder/path prefix.
    * @param file - File reference ({ uri?: string; name: string }).
    */
-  async deleteFile(uploadPath: string, file: { uri?: string; name: string }): Promise<void> {
+  async deleteFile(uploadPath: string, file: { uri?: string; name: string }): Promise<DeletionResult>;
+  async deleteFile(
+    arg1?: string,
+    arg2?: string | { uri?: string; name: string }
+  ): Promise<DeletionResult> {
     await this.ensureInitialized();
-    const key = this.normalizeKey(uploadPath, file);
-    if(!this.s3) {
+    if (!this.s3) {
       throw new Error('S3 client not initialized. Call init() first.');
     }
+
+    const key =
+      typeof arg2 === 'object' && arg2
+        ? this.normalizeKey(arg1 ?? '', arg2)
+        : (arg2 as string | undefined) ?? arg1;
+
+    if (!key) {
+      return { success: false, message: 'filePath or fileId is required for R2 delete.' };
+    }
+
     await this.s3.send(
       new DeleteObjectCommand({
         Bucket: this.R2_BUCKET,
         Key: key,
       })
     );
+    return { success: true };
   }
 
   /**

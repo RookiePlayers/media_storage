@@ -10,6 +10,7 @@
 const permissionsCreateMock = jest.fn();
 const filesGetMock = jest.fn();
 const filesCreateMock = jest.fn();
+const filesDeleteMock = jest.fn();
 
 jest.mock('googleapis/build/src/apis/drive', () => ({
   drive: jest.fn(() => ({
@@ -17,12 +18,14 @@ jest.mock('googleapis/build/src/apis/drive', () => ({
     files: {
       get: filesGetMock,
       create: filesCreateMock,
+      delete: filesDeleteMock,
     },
   })),
 }));
 
+const gcpConfigMock = jest.fn(() => ({ auth: {} }));
 jest.mock('../src/config/gcp_config', () => ({
-  GCPConfig: jest.fn(() => ({ auth: {} })), // ctor expects .auth
+  GCPConfig: gcpConfigMock, // ctor expects .auth
 }));
 
 // Mock the universal verifier so this spec stays focused on service logic
@@ -38,7 +41,8 @@ import { sriSha256, makeBuffer } from './helpers/testUtils';
 
 describe('GoogleDriveStorageService', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
+    gcpConfigMock.mockImplementation(() => ({ auth: {} }));
   });
 
   it('uploads and (mock) verifies existence (integrity unknown)', async () => {
@@ -74,11 +78,40 @@ describe('GoogleDriveStorageService', () => {
     expect(res.locator).toEqual({
       provider: 'drive',
       fileId: 'file123',
+      filePath: 'folderA/d.png',
       shouldSupportSharedDrives: false,
     });
 
     expect(filesCreateMock).toHaveBeenCalledTimes(1);
     expect(permissionsCreateMock).toHaveBeenCalledTimes(1);
     expect(filesGetMock).toHaveBeenCalledTimes(1); // only the links call
+  });
+
+  it('deletes a drive file by id', async () => {
+    const { GoogleDriveStorageService } = await import('../src/services/googleDriveStorage');
+
+    const svc = new GoogleDriveStorageService();
+    filesDeleteMock.mockResolvedValueOnce({});
+
+    const res = await svc.deleteFile('file123');
+
+    expect(filesDeleteMock).toHaveBeenCalledWith({
+      fileId: 'file123',
+      supportsAllDrives: false,
+    });
+    expect(res).toEqual({ success: true });
+  });
+
+  it('treats 404 as successful delete', async () => {
+    const { GoogleDriveStorageService } = await import('../src/services/googleDriveStorage');
+
+    const svc = new GoogleDriveStorageService();
+    const err: any = new Error('Not Found');
+    err.code = 404;
+    filesDeleteMock.mockRejectedValueOnce(err);
+
+    const res = await svc.deleteFile('missing');
+
+    expect(res).toEqual({ success: true, message: 'File not found in Drive.' });
   });
 });

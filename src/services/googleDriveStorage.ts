@@ -11,7 +11,7 @@
 
 import { drive as gdrive } from 'googleapis/build/src/apis/drive';
 import { GCPConfig } from '../config/gcp_config';
-import { DriveParams, StorageProvider, StorageResult, UploadParams, bufferToStream } from '../types';
+import { DeletionResult, DriveParams, StorageProvider, StorageResult, UploadParams, bufferToStream } from '../types';
 import { computeSRI, hashString } from '../utils/encryptions';
 import { IStorageService } from '../iStorage';
 import { BaseStorageService } from '../utils/baseStorage';
@@ -31,6 +31,32 @@ export class GoogleDriveStorageService extends BaseStorageService implements ISt
       
     this.auth = GCPConfig().auth;
     return Promise.resolve();
+  }
+
+  async deleteFile(fileId?: string, filePath?: string): Promise<DeletionResult> {
+    await this.init();
+    const id = fileId ?? filePath;
+    if (!id) {
+      return { success: false, message: 'fileId is required for Drive delete.' };
+    }
+
+    const drive = gdrive({
+      version: 'v3',
+      auth: this.auth,
+    });
+
+    try {
+      await drive.files.delete({
+        fileId: id,
+        supportsAllDrives: false,
+      });
+      return { success: true };
+    } catch (err: any) {
+      if (err?.code === 404) {
+        return { success: true, message: 'File not found in Drive.' };
+      }
+      throw err;
+    }
   }
 
   /**
@@ -124,6 +150,7 @@ export class GoogleDriveStorageService extends BaseStorageService implements ISt
       const buffer = Buffer.from(objectParams.file.data);
       const integrity = computeSRI(buffer, 'sha256');
 
+      const filePath = `${parents.join('/')}/${objectParams.file.name}`;
       const result = this.finalizeResult(
         {
           downloadUrl: links?.webContentLink ?? '',
@@ -131,7 +158,12 @@ export class GoogleDriveStorageService extends BaseStorageService implements ISt
           key: hashString(objectParams.file.name),
           integrity,
           sizeBytes: buffer.length,
-          locator: { provider: 'drive', fileId: resp.data.id!, shouldSupportSharedDrives },
+          locator: {
+            provider: 'drive',
+            fileId: resp.data.id!,
+            filePath,
+            shouldSupportSharedDrives,
+          },
           provider: 'drive',
         },
         {}
