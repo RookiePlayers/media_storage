@@ -99,7 +99,13 @@ describe('CloudFlareR2StorageService', () => {
     expect(res.downloadUrl).toEqual(res.url);
     expect(res.integrity).toEqual(sriSha256(data));
     expect(res.sizeBytes).toBe(data.length);
-    expect(res.locator).toEqual({ provider: 'r2', bucket: 'bucket', key: expect.any(String) });
+  expect(res.locator).toEqual({
+    provider: 'r2',
+    bucket: 'bucket',
+    key: expect.any(String),
+    fileId: expect.any(String),
+    filePath: expect.any(String),
+  });
 
     // sanity: at least two HEADs (pre + verify) and one PUT
     const headCalls = sendMock.mock.calls.filter(([c]) => isHead(c)).length;
