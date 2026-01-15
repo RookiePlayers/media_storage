@@ -1,3 +1,11 @@
+# [1.3.0](https://github.com/RookiePlayers/media_storage/compare/v1.2.3...v1.3.0) (2026-01-15)
+
+
+### Features
+
+* Implement deleteFile method for storage services and update documentation ([3577698](https://github.com/RookiePlayers/media_storage/commit/357769871dea764978b96407263e67ffc8256fd9))
+* Implement deleteFile method for storage services and update documentation ([e2ed6b8](https://github.com/RookiePlayers/media_storage/commit/e2ed6b84703f1145d80edadf9e090651bfda0367))
+
 ## [1.2.3](https://github.com/RookiePlayers/media_storage/compare/v1.2.2...v1.2.3) (2026-01-08)
 
 
