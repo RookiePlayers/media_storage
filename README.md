@@ -94,6 +94,7 @@ function init() {
         service:new GoogleDriveStorageService(),
         config:{
             gcp_service_account_key_base64: process.env.GCP_SERVICE_ACCOUNT_KEY_BASE64 || '',
+            //!Note: This is not need, if you experience a hang try removing this, we handle scopes internally already
             gcp_drive_scopes: process.env.GCP_DRIVE_SCOPES || '',
         }
     })
