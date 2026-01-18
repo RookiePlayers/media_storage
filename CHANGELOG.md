@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/RookiePlayers/media_storage/compare/v1.3.0...v1.4.0) (2026-01-18)
+
+
+### Features
+
+* Add OAuth support for Google Drive authentication in GCP configuration ([2519de2](https://github.com/RookiePlayers/media_storage/commit/2519de25cead33709b9869bfe8e94bee84c9dd2d))
+
 # [1.3.0](https://github.com/RookiePlayers/media_storage/compare/v1.2.3...v1.3.0) (2026-01-15)
 
 
