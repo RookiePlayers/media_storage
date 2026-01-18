@@ -97,6 +97,10 @@ export default class EnvironmentRegister {
 
       gcp_service_account_key_base64: process.env.GCP_SERVICE_ACCOUNT_KEY_BASE64,
       gcp_drive_scopes: process.env.GCP_DRIVE_SCOPES, // e.g. "https://www.googleapis.com/auth/drive"
+      gcp_oauth_access_token: process.env.GCP_OAUTH_ACCESS_TOKEN,
+      gcp_oauth_refresh_token: process.env.GCP_OAUTH_REFRESH_TOKEN,
+      gcp_oauth_client_id: process.env.GCP_OAUTH_CLIENT_ID,
+      gcp_oauth_client_secret: process.env.GCP_OAUTH_CLIENT_SECRET,
 
       r2_account_id: process.env.R2_ACCOUNT_ID,
       r2_bucket: process.env.R2_BUCKET,

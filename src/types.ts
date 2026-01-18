@@ -89,6 +89,10 @@ export type EnvironmentConfig = {
   firebase_storage_bucket?: string;
   gcp_service_account_key_base64?: string;
   gcp_drive_scopes?: string;
+  gcp_oauth_access_token?: string;
+  gcp_oauth_refresh_token?: string;
+  gcp_oauth_client_id?: string;
+  gcp_oauth_client_secret?: string;
   r2_account_id?: string;
   r2_bucket?: string;
   r2_access_key_secret?: string;

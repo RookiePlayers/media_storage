@@ -281,6 +281,20 @@ const env = EnvironmentRegister.getInstance();
 env.loadFromProcessEnv();
 ```
 
+For Google Drive, you can authenticate with either a service account (`GCP_SERVICE_ACCOUNT_KEY_BASE64`) or a user OAuth token (`GCP_OAUTH_ACCESS_TOKEN`, optionally with refresh token + client id/secret).
+
+### Getting Google Drive credentials
+
+Service account (Shared Drives only):
+- Create a service account in Google Cloud Console and generate a JSON key.
+- Base64-encode the JSON file and set `GCP_SERVICE_ACCOUNT_KEY_BASE64`.
+- Share the target Shared Drive or folder with the service account email.
+
+User OAuth (My Drive quota):
+- Create an OAuth client (Desktop/Web) in Google Cloud Console and note the client id/secret.
+- Run an OAuth consent flow with the Drive scope you need (e.g. `https://www.googleapis.com/auth/drive.file`).
+- Use the resulting access token as `GCP_OAUTH_ACCESS_TOKEN`. For long-lived use, request offline access and store the refresh token as `GCP_OAUTH_REFRESH_TOKEN`.
+
 ### Example `.env` file
 
 ```bash
@@ -293,6 +307,10 @@ FIREBASE_STORAGE_BUCKET=my-app.appspot.com
 FIREBASE_SERVICE_ACCOUNT_KEY_BASE64=...base64...
 GCP_SERVICE_ACCOUNT_KEY_BASE64=...base64...
 GCP_DRIVE_SCOPES=https://www.googleapis.com/auth/drive.file
+GCP_OAUTH_ACCESS_TOKEN=ya29... # optional alternative to service account
+GCP_OAUTH_REFRESH_TOKEN=1//... # optional, enables refresh when paired with client id/secret
+GCP_OAUTH_CLIENT_ID=...apps.googleusercontent.com
+GCP_OAUTH_CLIENT_SECRET=...
 ```
 
 ---
