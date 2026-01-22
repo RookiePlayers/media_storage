@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/RookiePlayers/media_storage/compare/v1.4.0...v1.5.0) (2026-01-22)
+
+
+### Features
+
+* Update dependencies and add presigned URL functionality for CloudFlare R2 ([9b4d1c9](https://github.com/RookiePlayers/media_storage/commit/9b4d1c97a95ed2864873bdd6349816f681eefba5))
+
 # [1.4.0](https://github.com/RookiePlayers/media_storage/compare/v1.3.0...v1.4.0) (2026-01-18)
 
 
