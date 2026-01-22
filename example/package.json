@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

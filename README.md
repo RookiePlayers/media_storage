@@ -255,6 +255,23 @@ Google Drive:
 await gd_storage.deleteFile(gdResult.locator?.fileId);
 ```
 
+### 5. Presigned URLs (Cloudflare R2)
+
+For private R2 buckets, generate a **time-limited** presigned URL for downloads. Use the
+object `key` returned from `uploadFile` (or stored in your DB).
+
+```ts
+const r2Service = r2_storage.getStorageService() as CloudFlareR2StorageService;
+const key = r2Result.key;
+const downloadUrl = await r2Service.getPresignedUrl(key, 600); // 10 minutes
+```
+
+You can also create a presigned PUT URL for direct client uploads:
+
+```ts
+const uploadUrl = await r2Service.getPresignedUploadUrl(key, "text/plain", 600);
+```
+
 ### 5. Deleting Files (Universal)
 
 Use the `deleteFileFromStorage` helper with the `locator` returned by `uploadFile`.

@@ -106,7 +106,7 @@ export default class EnvironmentRegister {
       r2_bucket: process.env.R2_BUCKET,
       r2_access_key_id: process.env.R2_ACCESS_KEY_ID,
       r2_access_key_secret: process.env.R2_SECRET ?? process.env.R2_ACCESS_KEY_SECRET,
-      r2_cdn_base: process.env.CDN_BASE,
+      r2_cdn_base: process.env.R2_CDN_BASE ?? process.env.CDN_BASE,
     };
     this.registerEnvironments(map);
   }

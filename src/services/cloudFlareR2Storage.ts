@@ -32,7 +32,8 @@
  * ```
  */
 
-import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { DeletionResult, StorageProvider, StorageResult, UploadParams } from '../types';
 import { buildImmutableKey, computeSRI } from '../utils/encryptions';
 import { IStorageService } from '../iStorage';
@@ -291,5 +292,55 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
     const relative = (file.uri && file.uri.trim()) || file.name || '';
     const clean = relative.replace(/^[/\\]+/, '').replace(/\\/g, '/');
     return `${uploadPath}/${clean}`.replace(/\/+/g, '/');
+  }
+
+  /**
+   * Generates a presigned GET URL for a private R2 object.
+   * This does not change object ACLs; it only grants time-limited access.
+   */
+  async getPresignedUrl(key: string, expiresInSeconds = 900): Promise<string> {
+    await this.ensureInitialized();
+    if (!this.s3) {
+      throw new Error('S3 client not initialized. Call init() first.');
+    }
+    if (!key) {
+      throw new Error('key is required to generate a presigned URL.');
+    }
+
+    const command = new GetObjectCommand({
+      Bucket: this.R2_BUCKET,
+      Key: key,
+    });
+
+    return getSignedUrl(this.s3, command, { expiresIn: expiresInSeconds });
+  }
+
+  /**
+   * Generates a presigned PUT URL for direct client uploads.
+   * Client must upload with the same Content-Type used to sign the URL.
+   */
+  async getPresignedUploadUrl(
+    key: string,
+    contentType: string,
+    expiresInSeconds = 900
+  ): Promise<string> {
+    await this.ensureInitialized();
+    if (!this.s3) {
+      throw new Error('S3 client not initialized. Call init() first.');
+    }
+    if (!key) {
+      throw new Error('key is required to generate a presigned upload URL.');
+    }
+    if (!contentType) {
+      throw new Error('contentType is required to generate a presigned upload URL.');
+    }
+
+    const command = new PutObjectCommand({
+      Bucket: this.R2_BUCKET,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    return getSignedUrl(this.s3, command, { expiresIn: expiresInSeconds });
   }
 }
