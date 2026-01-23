@@ -6,6 +6,20 @@ import { assertHasIntegrity } from "./validate";
 
 
 export abstract class BaseStorageService {
+  async getPresignedUrl(_key: string, _expiresInSeconds = 900): Promise<string> {
+    void _expiresInSeconds;
+    throw new Error('Presigned URLs are not supported by this storage provider.');
+  }
+
+  async getPresignedUploadUrl(
+    _key: string,
+    _contentType: string,
+    _expiresInSeconds = 900
+  ): Promise<string> {
+    void _expiresInSeconds;
+    throw new Error('Presigned upload URLs are not supported by this storage provider.');
+  }
+
   protected finalizeResult(
     {
       url,

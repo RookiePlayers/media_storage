@@ -5,4 +5,10 @@ export interface IStorageService {
   init(): Promise<void>;
   deleteFile(fileId?: string, filePath?: string): Promise<DeletionResult>;
   uploadFile(objectParams: UploadParams, otherParams?: DriveParams): Promise<StorageResult>;
+  getPresignedUrl?(key: string, expiresInSeconds?: number): Promise<string>;
+  getPresignedUploadUrl?(
+    key: string,
+    contentType: string,
+    expiresInSeconds?: number
+  ): Promise<string>;
 }
