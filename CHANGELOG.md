@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/RookiePlayers/media_storage/compare/v1.5.0...v1.6.0) (2026-01-23)
+
+
+### Features
+
+* Add presigned URL and upload URL methods to BaseStorageService ([bdb418e](https://github.com/RookiePlayers/media_storage/commit/bdb418ed29a2e5c1a16cd96c5b77a2b6a424fe61))
+
 # [1.5.0](https://github.com/RookiePlayers/media_storage/compare/v1.4.0...v1.5.0) (2026-01-22)
 
 
