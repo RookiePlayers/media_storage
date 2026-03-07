@@ -33,6 +33,7 @@ permissions:
 jobs:
   publish:
     name: Publish to NPM
+    environment: ${{ inputs.target-env }}
     runs-on: ubuntu-latest
 
     steps:
