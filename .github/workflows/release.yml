@@ -36,7 +36,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: npm install --immutable
+        run: npm ci
 
       - name: Run Semantic Release
         id: semantic
@@ -54,7 +54,7 @@ jobs:
           echo "Latest release: $LATEST_TAG"
           echo "$LATEST_TAG" > version.txt
           # Set the version as an output
-          echo "::set-output name=version::$LATEST_TAG"
+          echo "version=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Extract latest changelog section
         if: success()

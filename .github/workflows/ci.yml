@@ -28,8 +28,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Install dependencies  
-        run: npm install --immutable
+      - name: Install dependencies
+        run: npm ci
 
       - name: Lint
         run: npm run lint
@@ -56,7 +56,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: npm install --immutable
+        run: npm ci
 
       - name: Validate current commit (last commit) with commitlint
         if: github.event_name == 'push'
@@ -87,7 +87,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: npm install --immutable
+        run: npm ci
 
       - name: Run unit tests
         run: npm test
