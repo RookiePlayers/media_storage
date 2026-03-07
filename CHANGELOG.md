@@ -1,3 +1,15 @@
+# [1.8.0](https://github.com/RookiePlayers/media_storage/compare/v1.7.0...v1.8.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* Add ESLint directive to ignore unused variable warnings ([3b2c369](https://github.com/RookiePlayers/media_storage/commit/3b2c369f7f36e81d5b0c80e855d5cc6834e075c2))
+
+
+### Features
+
+* Implement client-driven multipart upload for CloudFlare R2 and Firebase storage services ([e9342aa](https://github.com/RookiePlayers/media_storage/commit/e9342aac9f0a013d59d6d19a32b3b2aa5d623e0a))
+
 # [1.7.0](https://github.com/RookiePlayers/media_storage/compare/v1.6.0...v1.7.0) (2026-03-07)
 
 
