@@ -90,6 +90,64 @@ function init() {
     }).catch(err => {
         console.error('R2 upload error:', err);
     })
+
+    // ── Multipart upload: explicit opt-in ─────────────────────────────────────
+    // Force multipart even for a small file by passing `multipart: {}`.
+    // Useful for verifying the multipart code path without needing a large file.
+    r2_storage.uploadFile({
+        file: {
+            name: 'multipart-explicit.bin',
+            mimetype: 'application/octet-stream',
+            // 6 MB: two 5 MB-minimum parts (part 1 = 5 MB, part 2 = 1 MB)
+            data: Buffer.alloc(6 * 1024 * 1024, 0xab),
+        },
+        uploadPath: 'example/multipart',
+        multipart: {
+            chunkSizeMB: 5,  // 5 MB chunks (S3/R2 minimum)
+            retries: 2,
+        },
+    }).then(async result => {
+        console.log('R2 multipart (explicit) uploaded:', result);
+        if (process.env.DELETE_AFTER_UPLOAD === 'true') {
+            const key = result.locator?.provider === 'r2' ? result.locator.key : undefined;
+            if (key) {
+                await r2_storage.deleteFile(undefined, key);
+                console.log('R2 multipart (explicit) deleted');
+            }
+        }
+    }).catch(err => {
+        console.error('R2 multipart (explicit) error:', err);
+    });
+
+    // ── Multipart upload: auto-threshold ──────────────────────────────────────
+    // Trigger multipart automatically by lowering the threshold to 5 MB.
+    // In production the default is 100 MB; here we lower it to prove the
+    // auto-detection path without allocating 100+ MB in the example.
+    r2_storage.uploadFile({
+        file: {
+            name: 'multipart-auto.bin',
+            mimetype: 'application/octet-stream',
+            // 12 MB: exceeds the 5 MB threshold → auto-multipart (3 × 5 MB parts, last partial)
+            data: Buffer.alloc(12 * 1024 * 1024, 0xcd),
+        },
+        uploadPath: 'example/multipart',
+        multipart: {
+            thresholdMB: 5,   // auto-enable multipart above 5 MB
+            chunkSizeMB: 5,
+            retries: 3,
+        },
+    }).then(async result => {
+        console.log('R2 multipart (auto-threshold) uploaded:', result);
+        if (process.env.DELETE_AFTER_UPLOAD === 'true') {
+            const key = result.locator?.provider === 'r2' ? result.locator.key : undefined;
+            if (key) {
+                await r2_storage.deleteFile(undefined, key);
+                console.log('R2 multipart (auto-threshold) deleted');
+            }
+        }
+    }).catch(err => {
+        console.error('R2 multipart (auto-threshold) error:', err);
+    });
     const app = express();
     app.use(express.json());
 

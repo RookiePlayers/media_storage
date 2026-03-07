@@ -91,7 +91,11 @@ export class FirebaseStorageService extends BaseStorageService implements IStora
       const integrity = computeSRI(buffer, 'sha256');
       const sha256Hex = integrity.split('-')[1] ? Buffer.from(integrity.split('-')[1], 'base64').toString('hex') : undefined;
 
+      const RESUMABLE_THRESHOLD = (objectParams.multipart?.thresholdMB ?? 5) * 1024 * 1024;
+      const useResumable = objectParams.multipart !== undefined || buffer.length > RESUMABLE_THRESHOLD;
+
       await fileToStore.save(buffer, {
+        resumable: useResumable,
         metadata: {
           contentType: objectParams.file.mimetype,
           cacheControl: objectParams.cacheControl ?? 'public, max-age=31536000',

@@ -18,6 +18,15 @@ export type DriveParams = {
     shouldSupportSharedDrives: boolean;
 }
 
+export type MultipartOptions = {
+  /** Chunk size in MB. Minimum 5 MB (S3/R2 requirement). Defaults to 10 MB. */
+  chunkSizeMB?: number;
+  /** File size threshold in MB for using multipart upload. Defaults to 100 MB. */
+  thresholdMB?: number;
+  /** How many times to retry a failed chunk before aborting. Defaults to 3. */
+  retries?: number;
+};
+
 export type UploadParams = {
   file:{
     name: string;
@@ -28,7 +37,11 @@ export type UploadParams = {
   uploadPath?: string;
   parentPathIds?: string[];
   cacheControl?: string;
-
+  /**
+   * Enable multipart/chunked upload. If omitted, multipart is used automatically
+   * for files larger than 100 MB on providers that support it.
+   */
+  multipart?: MultipartOptions;
 }
 
 // types.ts

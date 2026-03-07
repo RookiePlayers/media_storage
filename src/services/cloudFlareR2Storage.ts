@@ -32,7 +32,18 @@
  * ```
  */
 
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CompletedPart,
+  CreateMultipartUploadCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { DeletionResult, StorageProvider, StorageResult, UploadParams } from '../types';
 import { buildImmutableKey, computeSRI } from '../utils/encryptions';
@@ -158,31 +169,42 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
     const url = `${this.CDN_BASE}/${key}`;
 
     // --------------------------
-    // 2) PUT: only if missing/mismatch; swallow 412 race
+    // 2) PUT / multipart: only if missing/mismatch
     // --------------------------
+    const MULTIPART_THRESHOLD = (objectParams.multipart?.thresholdMB ?? 100) * 1024 * 1024; // 100 MB
+    const DEFAULT_CHUNK_SIZE_MB = 10;
+    const useMultipart =
+      objectParams.multipart !== undefined || file.data.length > MULTIPART_THRESHOLD;
+
     if (!exists) {
-      try {
-        if(!this.s3) {
-          throw new Error('S3 client not initialized. Call init() first.');
-        }
-        await this.s3.send(new PutObjectCommand({
-          Bucket: this.R2_BUCKET,
-          Key: key,
-          Body: file.data,
-          ContentType: file.mimetype,
-          CacheControl: objectParams.cacheControl ?? 'public, max-age=31536000, immutable',
-          // store CONTENT sha256 (hex) so verifyStorage can HEAD-compare
-          Metadata: { sha256: contentSha256Hex },
-          IfNoneMatch: '*',
-        }));
-      } catch (e: any) {
-        const status = e?.$metadata?.httpStatusCode;
-        if (status === 412) {
-          // Another writer won the race; proceed to verify via HEAD.
-        } else {
-          // Real failure
-          console.error('Error uploading file to CloudFlare R2:', e);
-          throw e;
+      if(!this.s3) {
+        throw new Error('S3 client not initialized. Call init() first.');
+      }
+      const cacheControl = objectParams.cacheControl ?? 'public, max-age=31536000, immutable';
+
+      if (useMultipart) {
+        const chunkSizeMB = objectParams.multipart?.chunkSizeMB ?? DEFAULT_CHUNK_SIZE_MB;
+        const retries = objectParams.multipart?.retries ?? 3;
+        await this.uploadMultipart(key, file.data, file.mimetype, cacheControl, contentSha256Hex, chunkSizeMB, retries);
+      } else {
+        try {
+          await this.s3.send(new PutObjectCommand({
+            Bucket: this.R2_BUCKET,
+            Key: key,
+            Body: file.data,
+            ContentType: file.mimetype,
+            CacheControl: cacheControl,
+            Metadata: { sha256: contentSha256Hex },
+            IfNoneMatch: '*',
+          }));
+        } catch (e: any) {
+          const status = e?.$metadata?.httpStatusCode;
+          if (status === 412) {
+            // Another writer won the race; proceed to verify via HEAD.
+          } else {
+            console.error('Error uploading file to CloudFlare R2:', e);
+            throw e;
+          }
         }
       }
     }
@@ -292,6 +314,91 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
     const relative = (file.uri && file.uri.trim()) || file.name || '';
     const clean = relative.replace(/^[/\\]+/, '').replace(/\\/g, '/');
     return `${uploadPath}/${clean}`.replace(/\/+/g, '/');
+  }
+
+  /**
+   * Performs an S3 multipart upload for large files.
+   * Each part is retried up to `maxRetries` times with exponential backoff.
+   * The entire multipart upload is aborted on unrecoverable failure.
+   */
+  private async uploadMultipart(
+    key: string,
+    data: Buffer,
+    contentType: string,
+    cacheControl: string,
+    contentSha256Hex: string,
+    chunkSizeMB: number,
+    maxRetries: number
+  ): Promise<void> {
+    const chunkSize = Math.max(chunkSizeMB * 1024 * 1024, 5 * 1024 * 1024);
+
+    const { UploadId } = await this.s3!.send(
+      new CreateMultipartUploadCommand({
+        Bucket: this.R2_BUCKET,
+        Key: key,
+        ContentType: contentType,
+        CacheControl: cacheControl,
+        Metadata: { sha256: contentSha256Hex },
+      })
+    );
+
+    const parts: CompletedPart[] = [];
+    let partNumber = 1;
+    let offset = 0;
+
+    try {
+      while (offset < data.length) {
+        const chunk = data.subarray(offset, offset + chunkSize);
+
+        let ETag: string | undefined;
+        let attempt = 0;
+        let lastErr: unknown;
+
+        while (attempt <= maxRetries) {
+          try {
+            ({ ETag } = await this.s3!.send(
+              new UploadPartCommand({
+                Bucket: this.R2_BUCKET,
+                Key: key,
+                UploadId,
+                PartNumber: partNumber,
+                Body: chunk,
+              })
+            ));
+            lastErr = undefined;
+            break;
+          } catch (err) {
+            lastErr = err;
+            attempt++;
+            if (attempt <= maxRetries) {
+              await new Promise((res) => setTimeout(res, 200 * 2 ** (attempt - 1)));
+            }
+          }
+        }
+
+        if (lastErr !== undefined) {
+          throw lastErr;
+        }
+
+        parts.push({ PartNumber: partNumber, ETag });
+        offset += chunkSize;
+        partNumber++;
+      }
+
+      await this.s3!.send(
+        new CompleteMultipartUploadCommand({
+          Bucket: this.R2_BUCKET,
+          Key: key,
+          UploadId,
+          MultipartUpload: { Parts: parts },
+        })
+      );
+    } catch (err) {
+      try {
+        await this.s3!.send(new AbortMultipartUploadCommand({ Bucket: this.R2_BUCKET, Key: key, UploadId }));
+      } catch { /* best-effort cleanup */ }
+      throw err;
+    }
   }
 
   /**
