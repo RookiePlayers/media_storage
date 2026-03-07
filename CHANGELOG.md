@@ -1,3 +1,10 @@
+## [1.8.4](https://github.com/RookiePlayers/media_storage/compare/v1.8.3...v1.8.4) (2026-03-07)
+
+
+### Bug Fixes
+
+* Replace npm install with npm ci for consistent dependency installation ([a3ed710](https://github.com/RookiePlayers/media_storage/commit/a3ed71052aae9bf0eba6790d0d7023a6e25295c1))
+
 ## [1.8.3](https://github.com/RookiePlayers/media_storage/compare/v1.8.2...v1.8.3) (2026-03-07)
 
 
