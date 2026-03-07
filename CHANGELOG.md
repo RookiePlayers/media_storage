@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/RookiePlayers/media_storage/compare/v1.8.1...v1.8.2) (2026-03-07)
+
+
+### Bug Fixes
+
+* Add environment context to NPM publish job ([7228f2d](https://github.com/RookiePlayers/media_storage/commit/7228f2d47a730a2833f1d0eff9bbe594f5621d3e))
+
 ## [1.8.1](https://github.com/RookiePlayers/media_storage/compare/v1.8.0...v1.8.1) (2026-03-07)
 
 
