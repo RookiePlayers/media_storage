@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/RookiePlayers/media_storage/compare/v1.8.0...v1.8.1) (2026-03-07)
+
+
+### Bug Fixes
+
+* Update permissions in workflow files for production and staging ([083bed6](https://github.com/RookiePlayers/media_storage/commit/083bed6113792a0208d9c1bf191bdaedd0e03077))
+
 # [1.8.0](https://github.com/RookiePlayers/media_storage/compare/v1.7.0...v1.8.0) (2026-03-07)
 
 
