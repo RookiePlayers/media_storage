@@ -1,3 +1,10 @@
+## [1.8.3](https://github.com/RookiePlayers/media_storage/compare/v1.8.2...v1.8.3) (2026-03-07)
+
+
+### Bug Fixes
+
+* Remove NODE_AUTH_TOKEN from publish step in deploy workflow ([481efab](https://github.com/RookiePlayers/media_storage/commit/481efabac0c9041c556867f7cfa13845a2a01787))
+
 ## [1.8.2](https://github.com/RookiePlayers/media_storage/compare/v1.8.1...v1.8.2) (2026-03-07)
 
 
