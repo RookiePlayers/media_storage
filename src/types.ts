@@ -68,6 +68,43 @@ export type DeletionResult = {
   message?: string;
 }
 
+/** Returned by initiateMultipartUpload — pass uploadId + key to each chunk call */
+export type MultipartSession = {
+  uploadId: string;
+  key: string;
+};
+
+/** Returned per chunk — collect all and pass to completeMultipartUpload */
+export type UploadedPart = {
+  partNumber: number;
+  etag: string;
+};
+
+export type InitiateMultipartParams = {
+  key: string;
+  contentType: string;
+  cacheControl?: string;
+  /** Store sha256 hex in object metadata for later integrity verification */
+  sha256Hex?: string;
+};
+
+export type UploadChunkParams = {
+  uploadId: string;
+  key: string;
+  /** 1-based part number */
+  partNumber: number;
+  data: Buffer;
+};
+
+export type CompleteMultipartParams = {
+  uploadId: string;
+  key: string;
+  parts: UploadedPart[];
+  contentType: string;
+  sizeBytes?: number;
+  integrity?: string;
+};
+
 export interface StorageLocatorR2 {
   provider: 'r2';
   bucket: string;

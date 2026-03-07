@@ -5,7 +5,8 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { CloudFlareR2StorageService } from "../src/services/cloudFlareR2Storage";
 import { FirebaseStorageService } from "../src/services/firebaseStorage";
 import { GoogleDriveStorageService } from "../src/services/googleDriveStorage";
-import {MediaStorage} from "../src/MediaStorage";
+import { MediaStorage } from "../src/MediaStorage";
+import { UploadedPart } from "../src/types";
 
 function init() {
     const fb_storage =new MediaStorage(
@@ -148,6 +149,107 @@ function init() {
     }).catch(err => {
         console.error('R2 multipart (auto-threshold) error:', err);
     });
+
+    // ── Client-driven multipart upload ────────────────────────────────────────
+    // Simulates a client that slices the file itself and sends chunks one by one.
+    // This is the pattern for large browser uploads or resumable pipelines where
+    // the full file buffer is never held in memory all at once.
+    (async () => {
+        const r2Service = r2_storage.getStorageService() as CloudFlareR2StorageService;
+
+        const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB
+        const fileData = Buffer.alloc(12 * 1024 * 1024, 0xef); // 12 MB test file
+        const key = 'example/multipart/client-driven.bin';
+
+        const session = await r2Service.initiateMultipartUpload({
+            key,
+            contentType: 'application/octet-stream',
+        });
+        console.log('Client-driven session started:', session);
+
+        const collectedParts: UploadedPart[] = [];
+        try {
+            for (let i = 0; i * CHUNK_SIZE < fileData.length; i++) {
+                const chunk = fileData.subarray(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                const part = await r2Service.uploadChunk({
+                    uploadId: session.uploadId,
+                    key: session.key,
+                    partNumber: i + 1,
+                    data: chunk,
+                });
+                collectedParts.push(part);
+                console.log(`  Part ${part.partNumber} uploaded (${chunk.length} bytes), ETag: ${part.etag}`);
+            }
+
+            const result = await r2Service.completeMultipartUpload({
+                uploadId: session.uploadId,
+                key: session.key,
+                parts: collectedParts,
+                contentType: 'application/octet-stream',
+                sizeBytes: fileData.length,
+            });
+            console.log('Client-driven upload complete:', result);
+
+            if (process.env.DELETE_AFTER_UPLOAD === 'true') {
+                await r2_storage.deleteFile(undefined, key);
+                console.log('Client-driven upload deleted');
+            }
+        } catch (err) {
+            console.error('Client-driven upload failed, aborting session:', err);
+            await r2Service.abortMultipartUpload(session);
+        }
+    })();
+
+    // ── Firebase client-driven multipart upload ───────────────────────────────
+    // GCS resumable uploads require chunks that are multiples of 256 KiB
+    // (except the final chunk). 5 MB = 20 × 256 KiB, so it qualifies.
+    // `sizeBytes` must be passed to completeMultipartUpload so GCS can finalize.
+    (async () => {
+        const fbService = fb_storage.getStorageService() as FirebaseStorageService;
+
+        const CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB — valid GCS chunk size (multiple of 256 KiB)
+        const fileData = Buffer.alloc(12 * 1024 * 1024, 0xfe); // 12 MB test file
+        const objectPath = `example/multipart/firebase-client-driven.bin`;
+
+        const session = await fbService.initiateMultipartUpload({
+            key: objectPath,
+            contentType: 'application/octet-stream',
+        });
+        console.log('Firebase client-driven session started:', session.uploadId.slice(0, 80) + '…');
+
+        const collectedParts: UploadedPart[] = [];
+        try {
+            for (let i = 0; i * CHUNK_SIZE < fileData.length; i++) {
+                const chunk = fileData.subarray(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                const part = await fbService.uploadChunk({
+                    uploadId: session.uploadId,
+                    key: session.key,
+                    partNumber: i + 1,
+                    data: chunk,
+                });
+                collectedParts.push(part);
+                console.log(`  Firebase part ${part.partNumber} uploaded (${chunk.length} bytes)`);
+            }
+
+            const result = await fbService.completeMultipartUpload({
+                uploadId: session.uploadId,
+                key: session.key,
+                parts: collectedParts,
+                contentType: 'application/octet-stream',
+                sizeBytes: fileData.length,
+            });
+            console.log('Firebase client-driven upload complete:', result);
+
+            if (process.env.DELETE_AFTER_UPLOAD === 'true') {
+                await fb_storage.deleteFile(undefined, objectPath);
+                console.log('Firebase client-driven upload deleted');
+            }
+        } catch (err) {
+            console.error('Firebase client-driven upload failed, aborting session:', err);
+            await fbService.abortMultipartUpload(session);
+        }
+    })();
+
     const app = express();
     app.use(express.json());
 

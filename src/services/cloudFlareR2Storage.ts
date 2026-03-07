@@ -45,7 +45,17 @@ import {
   UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { DeletionResult, StorageProvider, StorageResult, UploadParams } from '../types';
+import {
+  CompleteMultipartParams,
+  DeletionResult,
+  InitiateMultipartParams,
+  MultipartSession,
+  StorageProvider,
+  StorageResult,
+  UploadChunkParams,
+  UploadParams,
+  UploadedPart,
+} from '../types';
 import { buildImmutableKey, computeSRI } from '../utils/encryptions';
 import { IStorageService } from '../iStorage';
 import { BaseStorageService } from '../utils/baseStorage';
@@ -399,6 +409,102 @@ export class CloudFlareR2StorageService extends BaseStorageService implements IS
       } catch { /* best-effort cleanup */ }
       throw err;
     }
+  }
+
+  // ── Client-driven multipart API ───────────────────────────────────────────
+
+  /**
+   * Start a client-driven multipart upload session.
+   * Call this once, then send each chunk with uploadChunk(), then call
+   * completeMultipartUpload() when all chunks are received.
+   */
+  async initiateMultipartUpload(params: InitiateMultipartParams): Promise<MultipartSession> {
+    await this.ensureInitialized();
+    if (!this.s3) throw new Error('S3 client not initialized. Call init() first.');
+
+    const { UploadId } = await this.s3.send(
+      new CreateMultipartUploadCommand({
+        Bucket: this.R2_BUCKET,
+        Key: params.key,
+        ContentType: params.contentType,
+        CacheControl: params.cacheControl ?? 'public, max-age=31536000, immutable',
+        ...(params.sha256Hex ? { Metadata: { sha256: params.sha256Hex } } : {}),
+      })
+    );
+
+    if (!UploadId) throw new Error('R2 did not return an UploadId.');
+    return { uploadId: UploadId, key: params.key };
+  }
+
+  /**
+   * Upload a single chunk (part) for an in-progress multipart session.
+   * partNumber is 1-based. Returns the ETag needed for completeMultipartUpload.
+   */
+  async uploadChunk(params: UploadChunkParams): Promise<UploadedPart> {
+    await this.ensureInitialized();
+    if (!this.s3) throw new Error('S3 client not initialized. Call init() first.');
+
+    const { ETag } = await this.s3.send(
+      new UploadPartCommand({
+        Bucket: this.R2_BUCKET,
+        Key: params.key,
+        UploadId: params.uploadId,
+        PartNumber: params.partNumber,
+        Body: params.data,
+      })
+    );
+
+    if (!ETag) throw new Error(`R2 did not return an ETag for part ${params.partNumber}.`);
+    return { partNumber: params.partNumber, etag: ETag };
+  }
+
+  /**
+   * Finalise a client-driven multipart upload.
+   * Pass all UploadedParts collected from uploadChunk() calls.
+   */
+  async completeMultipartUpload(params: CompleteMultipartParams): Promise<StorageResult> {
+    await this.ensureInitialized();
+    if (!this.s3 || !this.R2_BUCKET) throw new Error('S3 client not initialized. Call init() first.');
+
+    await this.s3.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: this.R2_BUCKET,
+        Key: params.key,
+        UploadId: params.uploadId,
+        MultipartUpload: {
+          Parts: params.parts.map((p) => ({ PartNumber: p.partNumber, ETag: p.etag })),
+        },
+      })
+    );
+
+    const url = `${this.CDN_BASE}/${params.key}`;
+    return this.finalizeResult(
+      {
+        url,
+        downloadUrl: url,
+        key: params.key,
+        integrity: params.integrity,
+        sizeBytes: params.sizeBytes,
+        locator: { provider: 'r2', bucket: this.R2_BUCKET, key: params.key },
+      },
+      {}
+    );
+  }
+
+  /**
+   * Abort and clean up an in-progress multipart session.
+   */
+  async abortMultipartUpload(session: MultipartSession): Promise<void> {
+    await this.ensureInitialized();
+    if (!this.s3) throw new Error('S3 client not initialized. Call init() first.');
+
+    await this.s3.send(
+      new AbortMultipartUploadCommand({
+        Bucket: this.R2_BUCKET,
+        Key: session.key,
+        UploadId: session.uploadId,
+      })
+    );
   }
 
   /**

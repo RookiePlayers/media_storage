@@ -27,7 +27,17 @@
 import { BaseStorageService } from '../utils/baseStorage';
 import { FirebaseConfig } from '../config/firebase_config';
 import { IStorageService } from '../iStorage';
-import { DeletionResult, UploadParams, StorageResult, StorageProvider } from '../types';
+import {
+  CompleteMultipartParams,
+  DeletionResult,
+  InitiateMultipartParams,
+  MultipartSession,
+  StorageProvider,
+  StorageResult,
+  UploadChunkParams,
+  UploadParams,
+  UploadedPart,
+} from '../types';
 import { computeSRI, hashString } from '../utils/encryptions';
 import { verifyStorage } from '../utils/universalIntegrityVerifier';
 import EnvironmentRegister from '../register';
@@ -146,6 +156,136 @@ export class FirebaseStorageService extends BaseStorageService implements IStora
     } catch (e) {
       throw e;
     }
+  }
+
+  // ── Client-driven multipart API (GCS resumable uploads) ──────────────────
+  //
+  // GCS resumable uploads differ from S3 multipart in two important ways:
+  //   1. Chunks must be multiples of 256 KiB (except the final chunk).
+  //   2. Chunks are sequential byte ranges, not numbered parts.
+  //
+  // The session URI returned by GCS is stored as `uploadId`.
+  // Byte offsets are tracked per-session in `_multipartOffsets`.
+
+  /** Maps GCS session URI → next byte offset */
+  private _multipartOffsets = new Map<string, number>();
+
+  private _gcsAuthClient() {
+    // `@google-cloud/storage` exposes its GoogleAuth instance on `authClient`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (this.firebaseStorage!.bucket().storage as any).authClient;
+  }
+
+  async initiateMultipartUpload(params: InitiateMultipartParams): Promise<MultipartSession> {
+    await this.ensureInitialized();
+    const bucket = this.firebaseStorage!.bucket();
+    const [uri] = await bucket.file(params.key).createResumableUpload({
+      metadata: {
+        contentType: params.contentType,
+        cacheControl: params.cacheControl ?? 'public, max-age=31536000',
+        ...(params.sha256Hex ? { metadata: { sha256: params.sha256Hex } } : {}),
+      },
+    });
+    this._multipartOffsets.set(uri, 0);
+    return { uploadId: uri, key: params.key };
+  }
+
+  /**
+   * Upload a single chunk to GCS.
+   * Chunks must be multiples of 256 KiB except the very last one.
+   * Parts must be uploaded sequentially (partNumber is informational only).
+   */
+  async uploadChunk(params: UploadChunkParams): Promise<UploadedPart> {
+    await this.ensureInitialized();
+    const { uploadId, data, partNumber } = params;
+    const offset = this._multipartOffsets.get(uploadId) ?? 0;
+    const end = offset + data.length - 1;
+
+    const authClient = this._gcsAuthClient();
+    const response = await authClient.request({
+      method: 'PUT',
+      url: uploadId,
+      headers: {
+        'Content-Range': `bytes ${offset}-${end}/*`,
+        'Content-Length': String(data.length),
+      },
+      body: data,
+      // GCS returns 308 (Resume Incomplete) for successful intermediate chunks
+      validateStatus: (status: number) => [200, 201, 308].includes(status),
+    });
+
+    if (![200, 201, 308].includes(response.status)) {
+      throw new Error(`GCS chunk upload failed: HTTP ${response.status}`);
+    }
+
+    this._multipartOffsets.set(uploadId, offset + data.length);
+    return { partNumber, etag: String(offset + data.length) };
+  }
+
+  /**
+   * Finalise a GCS resumable upload.
+   * `sizeBytes` is required — GCS needs the total size to close the session.
+   */
+  async completeMultipartUpload(params: CompleteMultipartParams): Promise<StorageResult> {
+    await this.ensureInitialized();
+    if (!params.sizeBytes) {
+      throw new Error('sizeBytes is required to finalise a Firebase/GCS multipart upload.');
+    }
+
+    const authClient = this._gcsAuthClient();
+    const response = await authClient.request({
+      method: 'PUT',
+      url: params.uploadId,
+      headers: {
+        'Content-Range': `bytes */${params.sizeBytes}`,
+        'Content-Length': '0',
+      },
+      validateStatus: (status: number) => [200, 201].includes(status),
+    });
+
+    if (![200, 201].includes(response.status)) {
+      throw new Error(`GCS upload finalisation failed: HTTP ${response.status}`);
+    }
+
+    this._multipartOffsets.delete(params.uploadId);
+
+    const bucket = this.firebaseStorage!.bucket();
+    const file = bucket.file(params.key);
+    await file.makePublic();
+    const url = file.publicUrl();
+
+    return this.finalizeResult(
+      {
+        url,
+        downloadUrl: url,
+        key: hashString(params.key),
+        integrity: params.integrity,
+        sizeBytes: params.sizeBytes,
+        locator: {
+          provider: 'firebase',
+          bucket: bucket.name,
+          objectPath: params.key,
+          filePath: params.key,
+        },
+        provider: 'firebase',
+      },
+      {}
+    );
+  }
+
+  /** Abort and clean up a GCS resumable upload session. */
+  async abortMultipartUpload(session: MultipartSession): Promise<void> {
+    await this.ensureInitialized();
+    const authClient = this._gcsAuthClient();
+    try {
+      await authClient.request({
+        method: 'DELETE',
+        url: session.uploadId,
+        headers: { 'Content-Length': '0' },
+        validateStatus: () => true, // best-effort: ignore any status
+      });
+    } catch { /* best-effort */ }
+    this._multipartOffsets.delete(session.uploadId);
   }
 
   async deleteFile(fileId?: string, filePath?: string): Promise<DeletionResult> {

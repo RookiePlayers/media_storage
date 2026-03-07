@@ -1,6 +1,14 @@
 // services/baseStorage.ts
 
-import { StorageResult, IntegrityAlgo } from "../types";
+import {
+  CompleteMultipartParams,
+  InitiateMultipartParams,
+  IntegrityAlgo,
+  MultipartSession,
+  StorageResult,
+  UploadChunkParams,
+  UploadedPart,
+} from "../types";
 import { computeSRI } from "./encryptions";
 import { assertHasIntegrity } from "./validate";
 
@@ -18,6 +26,22 @@ export abstract class BaseStorageService {
   ): Promise<string> {
     void _expiresInSeconds;
     throw new Error('Presigned upload URLs are not supported by this storage provider.');
+  }
+
+  async initiateMultipartUpload(_params: InitiateMultipartParams): Promise<MultipartSession> {
+    throw new Error('Client-driven multipart upload is not supported by this storage provider.');
+  }
+
+  async uploadChunk(_params: UploadChunkParams): Promise<UploadedPart> {
+    throw new Error('Client-driven multipart upload is not supported by this storage provider.');
+  }
+
+  async completeMultipartUpload(_params: CompleteMultipartParams): Promise<StorageResult> {
+    throw new Error('Client-driven multipart upload is not supported by this storage provider.');
+  }
+
+  async abortMultipartUpload(_session: MultipartSession): Promise<void> {
+    throw new Error('Client-driven multipart upload is not supported by this storage provider.');
   }
 
   protected finalizeResult(
