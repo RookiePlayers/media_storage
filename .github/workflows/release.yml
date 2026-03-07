@@ -12,6 +12,7 @@ permissions:
 jobs:
   release:
     name: Release on Conventional Commit
+    environment: production
     runs-on: ubuntu-latest
 
     steps:
