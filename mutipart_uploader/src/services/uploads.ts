@@ -10,7 +10,7 @@ class UploadsService {
         return UploadsService._instance;
     }
 
-    public async registerJob(file: any, uploadPath?: string) {
+    public async registerJob(_file: File, _uploadPath?: string) {
         // Placeholder for job registration logic
         /**
          * With this service we need to check the file size and if it exceeds our threshold, 

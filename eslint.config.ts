@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 // Top-level ignore applies to everything (JS in dist, etc.)
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "example/**", "__tests__/**", "coverage/**"],
+    ignores: ["dist/**", "node_modules/**", "example/**", "__tests__/**", "coverage/**", "mutipart_uploader/**"],
   },
 
   // TypeScript ESLint recommended presets
