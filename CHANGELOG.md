@@ -1,3 +1,15 @@
+# [1.7.0](https://github.com/RookiePlayers/media_storage/compare/v1.6.0...v1.7.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* Correct parameter names in registerJob method and update ESLint ignores ([01d896d](https://github.com/RookiePlayers/media_storage/commit/01d896df892dd6278fc03839ac64a672cdd5cdc9))
+
+
+### Features
+
+* Initialize multipart uploader with Kafka integration and file upload routes ([708251b](https://github.com/RookiePlayers/media_storage/commit/708251b05b3d9259f7a40916d015223cba5153c0))
+
 # [1.6.0](https://github.com/RookiePlayers/media_storage/compare/v1.5.0...v1.6.0) (2026-01-23)
 
 
