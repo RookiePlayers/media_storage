@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/RookiePlayers/media_storage/compare/v1.9.0...v1.9.1) (2026-03-08)
+
+
+### Bug Fixes
+
+* Remove redundant npm publish command for improved clarity ([5fe247e](https://github.com/RookiePlayers/media_storage/commit/5fe247e8c6c01abfc598a6dc58b1333760fdca09))
+
 # [1.9.0](https://github.com/RookiePlayers/media_storage/compare/v1.8.4...v1.9.0) (2026-03-08)
 
 
