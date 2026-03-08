@@ -1,3 +1,10 @@
+## [1.9.2](https://github.com/RookiePlayers/media_storage/compare/v1.9.1...v1.9.2) (2026-03-08)
+
+
+### Bug Fixes
+
+* Update comment for clarity on Firebase multipart upload requirements ([3f58d14](https://github.com/RookiePlayers/media_storage/commit/3f58d147680b12722814c2de0d2a3c4cb69c2427))
+
 ## [1.9.1](https://github.com/RookiePlayers/media_storage/compare/v1.9.0...v1.9.1) (2026-03-08)
 
 
