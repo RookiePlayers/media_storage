@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/RookiePlayers/media_storage/compare/v1.8.4...v1.9.0) (2026-03-08)
+
+
+### Features
+
+* Add semantic release configuration for automated versioning and changelog generation ([97f2abd](https://github.com/RookiePlayers/media_storage/commit/97f2abd906916d9ff7d194b9ee55802d41fc77ec))
+
 ## [1.8.4](https://github.com/RookiePlayers/media_storage/compare/v1.8.3...v1.8.4) (2026-03-07)
 
 
