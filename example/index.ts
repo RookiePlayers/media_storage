@@ -202,7 +202,7 @@ function init() {
 
     // ── Firebase client-driven multipart upload ───────────────────────────────
     // GCS resumable uploads require chunks that are multiples of 256 KiB
-    // (except the final chunk). 5 MB = 20 × 256 KiB, so it qualifies.
+    // (except the final chunk). 5 MB = 20 × 256 KiB, so it qualifies
     // `sizeBytes` must be passed to completeMultipartUpload so GCS can finalize.
     (async () => {
         const fbService = fb_storage.getStorageService() as FirebaseStorageService;
